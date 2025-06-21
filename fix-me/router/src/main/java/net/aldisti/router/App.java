@@ -1,13 +1,17 @@
 package net.aldisti.router;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 
 public class App {
+    private static final Logger log = LoggerFactory.getLogger(App.class);
 
     public static final int PORT = 8042;
 
     public static void main(String[] args) {
-        System.out.println("Router is starting!");
+        log.info("Router is starting");
 
         try {
             Server server = new Server(PORT);
@@ -16,6 +20,6 @@ public class App {
             e.printStackTrace();
         }
 
-        System.out.println("Router is stopping!");
+        log.info("Router is shutting down");
     }
 }

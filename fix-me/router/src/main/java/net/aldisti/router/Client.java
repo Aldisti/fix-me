@@ -1,5 +1,8 @@
 package net.aldisti.router;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Client extends Thread {
+    private static final Logger log = LoggerFactory.getLogger(Client.class);
 
     private final Socket socket;
     private final int clientId;
@@ -22,7 +26,7 @@ public class Client extends Thread {
         this.writer = new PrintWriter(this.socket.getOutputStream(), true);
         this.reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
 
-        log("Connection created");
+        log.info("Client#{}: created", clientId);
     }
 
     @Override
@@ -31,21 +35,20 @@ public class Client extends Thread {
         try {
             routine();
         } catch (IOException e) {
-            System.out.println("Error while communicating with client #" + clientId);
-            System.out.println(e.getMessage());
+            log.error("Error while running client {} routine", clientId, e);
         } finally {
-            System.out.println("Closing connection with client #" + clientId);
+            log.info("Closing connection with client {}", clientId);
             close();
         }
     }
 
     private void routine() throws IOException {
-        log("Starting routine");
+        log.info("Client#{}: starting routine", clientId);
         boolean running = true;
         while (running) {
             String line = reader.readLine();
             if (line == null) break;
-            log(line);
+            log.info("Client#{}: {}", clientId, line);
 
             List<String> commands = Arrays.stream(line.trim().split("\\s+", 3)).toList();
             if (commands.isEmpty()) continue;
@@ -80,18 +83,13 @@ public class Client extends Thread {
         writer.println(msg);
     }
 
-    public void log(String msg) {
-        System.out.println("Client#" + clientId + ": " + msg);
-    }
-
     public void close() {
         try {
             reader.close();
             writer.close();
             socket.close();
         } catch (IOException e) {
-            System.out.println("Error closing connection with client #" + clientId);
-            System.out.println(e.getMessage());
+            log.error("Error while closing connection with client {}", clientId, e);
         }
         dispatcher.unregister(clientId);
     }

@@ -1,9 +1,13 @@
 package net.aldisti.router;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 
 public class Server {
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
 
     private final ServerSocket socket;
     private final Dispatcher dispatcher;
@@ -11,7 +15,7 @@ public class Server {
     public Server(int port) throws IOException {
         this.socket = new ServerSocket(port);
         this.dispatcher = new Dispatcher();
-        System.out.println("Server listening at localhost:" + port);
+        log.info("Server started on port {}", port);
     }
 
     public void run() {
@@ -23,8 +27,7 @@ public class Server {
                 client = new Client(socket.accept(), availableId);
                 availableId++;
             } catch (IOException e) {
-                System.out.println("Couldn't accept client connection");
-                System.out.println(e.getMessage());
+                log.error("Couldn't accept client connection", e);
                 continue;
             }
             dispatcher.register(client);
