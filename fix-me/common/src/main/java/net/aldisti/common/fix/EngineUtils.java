@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static net.aldisti.common.fix.Message.TAGVALUE_SEPARATOR;
+import static net.aldisti.common.fix.Message.SEPARATOR;
 
 @Slf4j
 class EngineUtils {
@@ -18,8 +19,8 @@ class EngineUtils {
      * and ends with a Checksum tag.
      */
     static final String INTEGRITY_REGEX = "^(" + Tag.BODY_LENGTH.value
-            + TAGVALUE_SEPARATOR + "\\d+)-(.+)-(" + Tag.CHECKSUM.value
-            + TAGVALUE_SEPARATOR + "\\d{3})$";
+            + TAGVALUE_SEPARATOR + "\\d+)" + SEPARATOR + "(.+)" + SEPARATOR
+            + "(" + Tag.CHECKSUM.value + TAGVALUE_SEPARATOR + "\\d{3})$";
 
     static void setTagValue(Message message, String tagValue, String value) throws InvalidFixMessage {
         Tag tag = Tag.fromValue(tagValue);

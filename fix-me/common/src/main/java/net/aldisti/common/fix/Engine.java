@@ -31,6 +31,8 @@ public class Engine {
     public static Message deserialize(String msg) throws InvalidFixMessage {
         EngineUtils.verifyIntegrity(msg);
         Message message = new Message();
+        // the message id needs to be set at null
+        message.setMessageId(null);
         String[] tagValues = msg.split(Message.SEPARATOR);
         for (String tagValue : tagValues) {
             if (tagValue == null || tagValue.isEmpty())

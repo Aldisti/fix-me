@@ -4,13 +4,14 @@ import net.aldisti.common.fix.InvalidFixMessage;
 
 public enum Tag {
     BODY_LENGTH("9", "bodyLength"),
-    TYPE("13", "type"),
-    SENDER_ID("11", "senderId"),
-    TARGET_ID("12", "targetId"),
-    INSTRUMENT("14", "instrument"),
-    QUANTITY("15", "quantity"),
-    MARKET("16", "market"),
-    PRICE("17", "price"),
+    TYPE("11", "type"),
+    SENDER_ID("13", "senderId"),
+    TARGET_ID("15", "targetId"),
+    MESSAGE_ID("17", "messageId"),
+    INSTRUMENT("19", "instrument"),
+    QUANTITY("21", "quantity"),
+    MARKET("23", "market"),
+    PRICE("25", "price"),
     CHECKSUM("10", "checksum");
 
     public final String value;

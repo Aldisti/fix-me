@@ -30,5 +30,6 @@ class EngineTest {
         assertEquals(msg.getQuantity(), deserialized.getQuantity());
         assertEquals(msg.getMarket(), deserialized.getMarket());
         assertEquals(msg.getPrice(), deserialized.getPrice());
+        assertEquals(msg.getMessageId(), deserialized.getMessageId());
     }
 }

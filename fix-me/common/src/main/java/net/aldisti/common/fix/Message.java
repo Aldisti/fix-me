@@ -4,18 +4,19 @@ import lombok.*;
 import net.aldisti.common.fix.constants.*;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.UUID;
+
 /**
  * All the setters of this class perform validation checks.
  */
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 public class Message {
     /**
      * This is the separator used between each tag-value pair.
      */
-    public static final String SEPARATOR = "-"; // should be 
+    public static final String SEPARATOR = " "; // should be 
     /**
      * This is the separator used between the tag and value of each field.
      */
@@ -25,6 +26,7 @@ public class Message {
     private String type;
     private String senderId;
     private String targetId;
+    private String messageId;
     @Setter
     private String instrument;
     private String quantity;
@@ -32,6 +34,10 @@ public class Message {
     private String market;
     private String price;
     private String checksum;
+
+    public Message() {
+        messageId = UUID.randomUUID().toString();
+    }
 
     public void setBodyLength(String bodyLength) throws InvalidFixMessage {
         if (bodyLength == null)
@@ -67,6 +73,19 @@ public class Message {
         if (!targetId.matches("^\\d{6}$"))
             throw new InvalidFixMessage("Invalid sender id: " + targetId);
         this.targetId = targetId;
+    }
+
+    public void setMessageId(String messageId) throws InvalidFixMessage {
+        if (messageId == null) {
+            this.messageId = null;
+            return;
+        }
+        try {
+            UUID.fromString(messageId); // should throw if messageId is not a UUID
+        } catch (IllegalArgumentException e) {
+            throw new InvalidFixMessage("Invalid message id: " + messageId);
+        }
+        this.messageId = messageId;
     }
 
     public void setQuantity(String quantity) throws InvalidFixMessage {
