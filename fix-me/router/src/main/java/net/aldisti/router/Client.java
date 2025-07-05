@@ -1,5 +1,10 @@
 package net.aldisti.router;
 
+import lombok.Getter;
+import net.aldisti.common.fix.Engine;
+import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.MsgType;
+import net.aldisti.common.providers.IdProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,98 +13,99 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Client extends Thread {
     private static final Logger log = LoggerFactory.getLogger(Client.class);
 
+    @Getter
+    private final Integer clientId;
     private final Socket socket;
-    private final int clientId;
-    private final PrintWriter writer;
-    private final BufferedReader reader;
+    private final Queue<String> msgQueue;
+
     private Dispatcher dispatcher = null;
 
-    public Client(Socket socket, int clientId) throws IOException {
+    public Client(Socket socket) throws IOException {
         this.socket = socket;
-        this.clientId = clientId;
-        this.writer = new PrintWriter(this.socket.getOutputStream(), true);
-        this.reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-
-        log.info("Client#{}: created", clientId);
+        this.clientId = IdProvider.generate();
+        this.msgQueue = new ConcurrentLinkedQueue<>();
+        log.info("Client {} initialized", clientId);
     }
 
     @Override
     public void run() {
-        sendMessage("You are Client#" + clientId);
-        try {
-            routine();
-        } catch (IOException e) {
-            log.error("Error while running client {} routine", clientId, e);
+        try (
+                BufferedReader reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+                PrintWriter writer = new PrintWriter(this.socket.getOutputStream(), true);
+            ) {
+            writer.println(clientId);
+            routine(reader, writer);
+        } catch (IOException ioe) {
+            log.error("Error: cannot send or receive messages from client {}", clientId, ioe);
+        } catch (InterruptedException e) {
+            log.error("Error: interruption exception", e);
         } finally {
             log.info("Closing connection with client {}", clientId);
             close();
         }
     }
 
-    private void routine() throws IOException {
-        log.info("Client#{}: starting routine", clientId);
-        boolean running = true;
-        while (running) {
-            String line = reader.readLine();
-            if (line == null) break;
-            log.info("Client#{}: {}", clientId, line);
+    private void routine(BufferedReader reader, PrintWriter writer) throws IOException, InterruptedException {
+        String raw;
+        while (socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
 
-            List<String> commands = Arrays.stream(line.trim().split("\\s+", 3)).toList();
-            if (commands.isEmpty()) continue;
+            if (!msgQueue.isEmpty())
+                writer.println(msgQueue.remove());
 
-            switch (commands.getFirst().toUpperCase()) {
-                case "SEND":
-                    sendCommand(commands);
-                    break;
-                case "EXIT":
-                    running = false;
-                    break;
-                default:
-                    sendMessage("You said: " + line);
+            raw = reader.readLine();
+            if (raw != null) {
+                Message msg = Engine.deserialize(raw);
+                if (!clientId.toString().equals(msg.getSenderId())) {
+                    log.error("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
+                    msg.setType(MsgType.ERROR.getValue());
+                    writer.println(Engine.serialize(msg));
+                }
+                // forward message
+                int targetId = Integer.parseInt(msg.getTargetId());
+                if (dispatcher.exists(targetId))
+                    dispatcher.sendTo(targetId, raw);
             }
+            // TODO: maybe wait some millis?
         }
     }
 
-    private void sendCommand(List<String> commands) {
-        int receiverId;
-        try {
-            receiverId = Integer.parseInt(commands.get(1));
-        } catch (NumberFormatException e) {
-            sendMessage("Invalid client id: '" + commands.get(1) + "'");
-            return;
-        }
-        dispatcher.sendTo(receiverId, String.format(
-                "Client#%d says: %s", clientId, commands.getLast()
-        ));
-    }
-
+    /**
+     * Appends the message to a queue and it's sent to the client ASAP.
+     *
+     * @param msg A message to send.
+     */
     public void sendMessage(String msg) {
-        writer.println(msg);
+        msgQueue.offer(msg);
     }
 
+    /**
+     * Closes the client socket and unregisters the client from the {@link Dispatcher}
+     */
     public void close() {
         try {
-            reader.close();
-            writer.close();
             socket.close();
         } catch (IOException e) {
             log.error("Error while closing connection with client {}", clientId, e);
         }
         dispatcher.unregister(clientId);
+        log.info("Client {} closed with {} non-sent messages", clientId, msgQueue.size());
     }
 
+    /**
+     * Set the {@link Dispatcher} instance that manages this client.
+     * <br>
+     * Works only the first time.
+     *
+     * @param dispatcher A dispatcher instance.
+     */
     public void setDispatcher(Dispatcher dispatcher) {
         if (this.dispatcher == null)
             this.dispatcher = dispatcher;
-    }
-
-    public int getClientId() {
-        return this.clientId;
     }
 }

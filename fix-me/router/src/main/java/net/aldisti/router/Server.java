@@ -19,19 +19,16 @@ public class Server {
     }
 
     public void run() {
-        int availableId = 1;
-
-        while (true) {
+        while (!socket.isClosed()) {
             Client client;
             try {
-                client = new Client(socket.accept(), availableId);
-                availableId++;
+                client = new Client(socket.accept());
             } catch (IOException e) {
                 log.error("Couldn't accept client connection", e);
                 continue;
             }
             dispatcher.register(client);
-            client.start();
+            Thread.ofVirtual().start(client);
         }
     }
 }

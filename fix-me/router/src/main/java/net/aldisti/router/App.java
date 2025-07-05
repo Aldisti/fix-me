@@ -11,7 +11,7 @@ public class App {
     public static final int PORT = 8042;
 
     public static void main(String[] args) {
-        log.info("Router is starting");
+        log.info("Router is starting...");
 
         try {
             Server server = new Server(PORT);
@@ -20,6 +20,6 @@ public class App {
             e.printStackTrace();
         }
 
-        log.info("Router is shutting down");
+        log.info("Router is shutting down...");
     }
 }
