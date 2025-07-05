@@ -12,6 +12,7 @@ import java.util.UUID;
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
+@ToString
 public class Message {
     /**
      * This is the separator used between each tag-value pair.
@@ -50,7 +51,7 @@ public class Message {
     public String getType() {
         if (type == null)
             return null;
-        return MsgType.valueOf(type).getValue();
+        return MsgType.valueOf(type).value;
     }
 
     public void setType(String type) throws InvalidFixMessage {
