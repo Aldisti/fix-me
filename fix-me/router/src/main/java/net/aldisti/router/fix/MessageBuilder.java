@@ -14,12 +14,14 @@ public class MessageBuilder {
         return msg;
     }
 
-    public static Message invalidSender(Message msg) {
+    public static Message invalidSender(Message msg, Integer clientId) {
+        msg.setTargetId(clientId.toString());
         msg.setType(MsgType.INVALID_SENDER.value);
         return msg;
     }
 
-    public static Message invalidTarget(Message msg) {
+    public static Message invalidTarget(Message msg, Integer clientId) {
+        msg.setTargetId(clientId.toString());
         msg.setType(MsgType.INVALID_TARGET.value);
         return msg;
     }

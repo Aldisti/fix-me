@@ -76,10 +76,10 @@ public class Client extends Thread {
 
             if (!clientId.toString().equals(msg.getSenderId())) { // validate sender id
                 log.warn("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
-                writer.println(Engine.serialize(MessageBuilder.invalidTarget(msg)));
+                writer.println(Engine.serialize(MessageBuilder.invalidSender(msg, clientId)));
             } else if (!dispatcher.exists(targetId)) { // validate target id
                 log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
-                writer.println(Engine.serialize(MessageBuilder.invalidSender(msg)));
+                writer.println(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
             } else { // forward message
                 dispatcher.sendTo(targetId, raw);
             }
