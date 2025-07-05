@@ -2,9 +2,10 @@ package net.aldisti.router;
 
 import lombok.Getter;
 import net.aldisti.common.fix.Engine;
+import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
-import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.providers.IdProvider;
+import net.aldisti.router.fix.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,33 +44,44 @@ public class Client extends Thread {
             routine(reader, writer);
         } catch (IOException ioe) {
             log.error("Error: cannot send or receive messages from client {}", clientId, ioe);
-        } catch (InterruptedException e) {
-            log.error("Error: interruption exception", e);
         } finally {
             log.info("Closing connection with client {}", clientId);
             close();
         }
     }
 
-    private void routine(BufferedReader reader, PrintWriter writer) throws IOException, InterruptedException {
+    private void routine(BufferedReader reader, PrintWriter writer) throws IOException {
         String raw;
         while (socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
 
             if (!msgQueue.isEmpty())
                 writer.println(msgQueue.remove());
 
-            raw = reader.readLine();
-            if (raw != null) {
-                Message msg = Engine.deserialize(raw);
-                if (!clientId.toString().equals(msg.getSenderId())) {
-                    log.error("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
-                    msg.setType(MsgType.ERROR.getValue());
-                    writer.println(Engine.serialize(msg));
-                }
-                // forward message
-                int targetId = Integer.parseInt(msg.getTargetId());
-                if (dispatcher.exists(targetId))
-                    dispatcher.sendTo(targetId, raw);
+            // read incoming message
+            if ((raw = reader.readLine()) == null)
+                continue;
+
+            // deserialize message and validate it
+            Message msg;
+            try { // handle deserialization errors
+                msg = Engine.deserialize(raw);
+            } catch (InvalidFixMessage e) {
+                log.error("Client {} sent invalid message", clientId, e);
+                log.info("Message: {}", raw);
+                writer.println(Engine.serialize(MessageBuilder.invalidMessage(clientId)));
+                continue;
+            }
+
+            int targetId = Integer.parseInt(msg.getTargetId());
+
+            if (!clientId.toString().equals(msg.getSenderId())) { // validate sender id
+                log.warn("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
+                writer.println(Engine.serialize(MessageBuilder.invalidTarget(msg)));
+            } else if (!dispatcher.exists(targetId)) { // validate target id
+                log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
+                writer.println(Engine.serialize(MessageBuilder.invalidSender(msg)));
+            } else { // forward message
+                dispatcher.sendTo(targetId, raw);
             }
             // TODO: maybe wait some millis?
         }

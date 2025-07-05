@@ -7,8 +7,11 @@ import net.aldisti.common.fix.InvalidFixMessage;
 public enum MsgType {
     ORDER("A"),
     EXECUTED("B"),
-    REJECT("C"),
-    INSTRUMENT("D"),;
+    REJECTED("C"),
+    INSTRUMENT("D"),
+    ERROR("E"),
+    INVALID_TARGET("F"),
+    INVALID_SENDER("G"),;
 
     private final String value;
 
