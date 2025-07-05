@@ -9,7 +9,7 @@ class EngineTest {
     @Test
     void integration() {
         var msg = new Message();
-        msg.setType(MsgType.ORDER.getValue());
+        msg.setType(MsgType.ORDER.value);
         msg.setSenderId("220625");
         msg.setTargetId("526022");
         msg.setInstrument("RKLB");

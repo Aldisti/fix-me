@@ -10,17 +10,17 @@ public class MessageBuilder {
         Message msg = new Message();
         msg.setSenderId(clientId.toString());
         msg.setTargetId(clientId.toString());
-        msg.setType(MsgType.ERROR.getValue());
+        msg.setType(MsgType.ERROR.value);
         return msg;
     }
 
     public static Message invalidSender(Message msg) {
-        msg.setType(MsgType.INVALID_SENDER.getValue());
+        msg.setType(MsgType.INVALID_SENDER.value);
         return msg;
     }
 
     public static Message invalidTarget(Message msg) {
-        msg.setType(MsgType.INVALID_TARGET.getValue());
+        msg.setType(MsgType.INVALID_TARGET.value);
         return msg;
     }
 }

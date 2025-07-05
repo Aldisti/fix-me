@@ -1,19 +1,20 @@
 package net.aldisti.common.fix.constants;
 
-import lombok.Getter;
 import net.aldisti.common.fix.InvalidFixMessage;
 
-@Getter
 public enum MsgType {
-    ORDER("A"),
-    EXECUTED("B"),
-    REJECTED("C"),
-    INSTRUMENT("D"),
+    ORDER("O"),
+    BUY_ORDER("BO"),
+    SELL_ORDER("SO"),
+    EXECUTED("EX"),
+    REJECTED("R"),
+    INSTRUMENT("I"),
+    NOTIFY("N"),
     ERROR("E"),
-    INVALID_TARGET("F"),
-    INVALID_SENDER("G"),;
+    INVALID_TARGET("IT"),
+    INVALID_SENDER("IS"),;
 
-    private final String value;
+    public final String value;
 
     MsgType(String value) {
         this.value = value;
