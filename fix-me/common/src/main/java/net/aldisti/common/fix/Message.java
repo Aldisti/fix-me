@@ -28,7 +28,6 @@ public class Message {
     private String senderId;
     private String targetId;
     private String messageId;
-    @Setter
     private String instrument;
     private String quantity;
     @Setter
@@ -87,6 +86,14 @@ public class Message {
             throw new InvalidFixMessage("Invalid message id: " + messageId);
         }
         this.messageId = messageId;
+    }
+
+    public void setInstrument(String instrument) throws InvalidFixMessage {
+        try {
+            this.instrument = Instruments.valueOf(instrument.toUpperCase()).name();
+        } catch (IllegalArgumentException e) {
+            throw new InvalidFixMessage("Invalid instrument: " + instrument);
+        }
     }
 
     public void setQuantity(String quantity) throws InvalidFixMessage {
