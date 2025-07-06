@@ -8,7 +8,7 @@ public class MessageBuilder {
 
     public static Message invalidMessage(Integer clientId) {
         Message msg = new Message();
-        msg.setSenderId(clientId.toString());
+        msg.setSenderId("0");
         msg.setTargetId(clientId.toString());
         msg.setType(MsgType.ERROR.value);
         return msg;

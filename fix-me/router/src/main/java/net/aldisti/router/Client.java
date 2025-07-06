@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.aldisti.common.fix.Engine;
 import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.providers.IdProvider;
 import net.aldisti.router.fix.MessageBuilder;
 import org.slf4j.Logger;
@@ -22,13 +23,16 @@ public class Client extends Thread {
 
     @Getter
     private final Integer clientId;
+    @Getter
+    private final ClientType type;
     private final Socket socket;
     private final Queue<String> msgQueue;
 
     private Dispatcher dispatcher = null;
 
-    public Client(Socket socket) throws IOException {
+    public Client(Socket socket, ClientType type) throws IOException {
         this.socket = socket;
+        this.type = type;
         this.clientId = IdProvider.generate();
         this.msgQueue = new ConcurrentLinkedQueue<>();
         log.info("Client {} initialized", clientId);
@@ -52,6 +56,7 @@ public class Client extends Thread {
 
     private void routine(BufferedReader reader, PrintWriter writer) throws IOException {
         String raw;
+        Message msg;
         while (socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
 
             if (!msgQueue.isEmpty())
@@ -62,37 +67,60 @@ public class Client extends Thread {
                 continue;
 
             // deserialize message and validate it
-            Message msg;
-            try { // handle deserialization errors
-                msg = Engine.deserialize(raw);
-            } catch (InvalidFixMessage e) {
-                log.error("Client {} sent invalid message", clientId, e);
-                log.info("Message: {}", raw);
+            if ((msg = deserialize(raw)) == null) {
                 writer.println(Engine.serialize(MessageBuilder.invalidMessage(clientId)));
                 continue;
             }
 
-            int targetId = Integer.parseInt(msg.getTargetId());
+            handle(msg, raw);
+        }
+    }
 
-            if (!clientId.toString().equals(msg.getSenderId())) { // validate sender id
-                log.warn("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
-                writer.println(Engine.serialize(MessageBuilder.invalidSender(msg, clientId)));
-            } else if (!dispatcher.exists(targetId)) { // validate target id
-                log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
-                writer.println(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
-            } else { // forward message
-                dispatcher.sendTo(targetId, raw);
-            }
-            // TODO: maybe wait some millis?
+    private void handle(Message msg, final String raw) {
+        if (!clientId.toString().equals(msg.getSenderId())) { // validate sender id
+            log.warn("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
+            sendMessage(Engine.serialize(MessageBuilder.invalidSender(msg, clientId)));
+            return;
+        }
+        if (type == ClientType.MARKET && msg.getTargetId() == null) {
+            log.info("Client {} sent message to all brokers", clientId);
+            dispatcher.sendAll(raw);
+            return;
+        } else if (msg.getTargetId() == null) {
+            log.warn("Client {} sent message with no target", clientId);
+            sendMessage(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
+            return;
+        }
+
+        int targetId = Integer.parseInt(msg.getTargetId());
+
+        if (!dispatcher.exists(targetId)) {
+            log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
+            sendMessage(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
+        } else if (type == ClientType.BROKER && dispatcher.getClientType(targetId) == ClientType.BROKER) {
+            log.warn("Client {} is trying to send message to a {}", clientId, ClientType.BROKER.name());
+            sendMessage(Engine.serialize(MessageBuilder.invalidMessage(clientId)));
+        } else { // forward message
+            dispatcher.sendTo(targetId, raw);
+        }
+    }
+
+    private Message deserialize(String raw) {
+        try {
+            return Engine.deserialize(raw);
+        } catch (InvalidFixMessage e) { // handle deserialization errors
+            log.error("Client {} sent invalid message", clientId, e);
+            log.info("Message: {}", raw);
+            return null;
         }
     }
 
     /**
-     * Appends the message to a queue and it's sent to the client ASAP.
+     * Appends the message to a queue so that it is sent to the client ASAP.
      *
      * @param msg A message to send.
      */
-    public void sendMessage(String msg) {
+    public synchronized void sendMessage(String msg) {
         msgQueue.offer(msg);
     }
 
@@ -105,7 +133,8 @@ public class Client extends Thread {
         } catch (IOException e) {
             log.error("Error while closing connection with client {}", clientId, e);
         }
-        dispatcher.unregister(clientId);
+        if (dispatcher != null)
+            dispatcher.unregister(clientId);
         log.info("Client {} closed with {} non-sent messages", clientId, msgQueue.size());
     }
 

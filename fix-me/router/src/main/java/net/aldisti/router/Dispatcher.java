@@ -11,13 +11,19 @@ import java.util.Map;
 public class Dispatcher {
     private static final Logger log = LoggerFactory.getLogger(Dispatcher.class);
 
+    private static final Dispatcher instance = new Dispatcher();
+
     /**
      * A map of all registered clients.
      */
     private final Map<Integer, Client> clients;
 
-    public Dispatcher() {
+    private Dispatcher() {
         this.clients = new HashMap<>();
+    }
+
+    public static Dispatcher create() {
+        return instance;
     }
 
     /**
@@ -25,8 +31,9 @@ public class Dispatcher {
      *
      * @implNote This method is idempotent.
      * @param client A new client.
+     * @see #unregister(int)
      */
-    public void register(Client client) {
+    public synchronized void register(Client client) {
         int clientId = client.getClientId();
         if (clients.containsKey(clientId)) {
             log.error("Trying to register already registered client {}", clientId);
@@ -44,8 +51,9 @@ public class Dispatcher {
      *
      * @implNote This method is idempotent.
      * @param clientId A client id.
+     * @see #register(Client)
      */
-    public void unregister(int clientId) {
+    public synchronized void unregister(int clientId) {
         if (!clients.containsKey(clientId)) {
             log.error("Trying to unregister already unregistered client {}", clientId);
             return;
@@ -60,11 +68,12 @@ public class Dispatcher {
      * A new line is appended to the message.
      *
      * @param clientId A client id.
-     * @param msg The message to send.
+     * @param raw The message to send.
+     * @see #sendTo(int, Message)
      */
-    public synchronized void sendTo(int clientId, String msg) {
+    public synchronized void sendTo(int clientId, String raw) {
         if (clients.containsKey(clientId))
-            clients.get(clientId).sendMessage(msg);
+            clients.get(clientId).sendMessage(raw);
     }
 
     /**
@@ -74,10 +83,38 @@ public class Dispatcher {
      *
      * @param clientId A client id.
      * @param msg The message to send.
+     * @see #sendTo(int, String)
      */
     public synchronized void sendTo(int clientId, Message msg) {
         if (exists(clientId))
             clients.get(clientId).sendMessage(Engine.serialize(msg));
+    }
+
+    /**
+     * Sends a message to all Brokers registered to the dispatcher.
+     *
+     * @param raw The message to send.
+     * @see #sendAll(Message)
+     */
+    public synchronized void sendAll(String raw) {
+        clients.keySet().forEach(id -> {
+            Client client = clients.get(id);
+            if (client != null && client.getType() == ClientType.BROKER)
+                clients.get(id).sendMessage(raw);
+        });
+    }
+
+    /**
+     * @param msg The message to send.
+     * @see #sendAll(String)
+     */
+    public synchronized void sendAll(Message msg) {
+        String raw = Engine.serialize(msg);
+        clients.keySet().forEach(id -> {
+            Client client = clients.get(id);
+            if (client != null && client.getType() == ClientType.BROKER)
+                clients.get(id).sendMessage(raw);
+        });
     }
 
     /**
@@ -94,18 +131,15 @@ public class Dispatcher {
         return clients.containsKey(clientId);
     }
 
-    private void sendAll(String msg) {
-        clients.keySet().forEach(id -> {
-            if (clients.containsKey(id))
-                clients.get(id).sendMessage(msg);
-        });
-    }
-
-    private void sendAll(Message msg) {
-        String raw = Engine.serialize(msg);
-        clients.keySet().forEach(id -> {
-            if (clients.containsKey(id))
-                clients.get(id).sendMessage(raw);
-        });
+    /**
+     * Returns the {@link ClientType} of a specific client
+     * if it exists, {@code null} otherwise.
+     *
+     * @param clientId A client id.
+     * @return The type of the client.
+     */
+    public synchronized ClientType getClientType(Integer clientId) {
+        Client client = clients.get(clientId);
+        return (client != null) ? client.getType() : null;
     }
 }
