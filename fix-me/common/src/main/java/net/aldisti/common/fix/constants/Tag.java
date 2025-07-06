@@ -9,6 +9,7 @@ public enum Tag {
     TARGET_ID("15", "targetId"),
     MESSAGE_ID("17", "messageId"),
     INSTRUMENT("19", "instrument"),
+    ASSET_ID("20", "assetId"),
     QUANTITY("21", "quantity"),
     MARKET("23", "market"),
     PRICE("25", "price"),

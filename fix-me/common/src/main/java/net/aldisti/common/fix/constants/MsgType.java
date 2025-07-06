@@ -4,8 +4,8 @@ import net.aldisti.common.fix.InvalidFixMessage;
 
 public enum MsgType {
     ORDER("O"),
-    BUY_ORDER("BO"),
-    SELL_ORDER("SO"),
+    BUY("BO"),
+    SELL("SO"),
     EXECUTED("EX"),
     REJECTED("R"),
     INSTRUMENT("I"),

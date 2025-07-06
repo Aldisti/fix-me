@@ -29,6 +29,8 @@ public class Message {
     private String targetId;
     private String messageId;
     private String instrument;
+    @Setter
+    private String assetId;
     private String quantity;
     @Setter
     private String market;
@@ -39,12 +41,20 @@ public class Message {
         messageId = UUID.randomUUID().toString();
     }
 
+    // Body Length ------------------------------
+
     public void setBodyLength(String bodyLength) throws InvalidFixMessage {
         if (bodyLength == null)
             return;
         if (!bodyLength.matches("^\\d+$"))
             throw new InvalidFixMessage("Invalid body length: " + bodyLength);
         this.bodyLength = bodyLength;
+    }
+
+    // Type -------------------------------------
+
+    public MsgType type() {
+        return MsgType.valueOf(type);
     }
 
     public String getType() {
@@ -59,6 +69,8 @@ public class Message {
         this.type = MsgType.fromValue(type).name();
     }
 
+    // Sender Id --------------------------------
+
     public void setSenderId(String senderId) throws InvalidFixMessage {
         if (senderId == null)
             return;
@@ -67,6 +79,8 @@ public class Message {
         this.senderId = senderId;
     }
 
+    // Target Id --------------------------------
+
     public void setTargetId(String targetId) throws InvalidFixMessage {
         if (targetId == null)
             return;
@@ -74,6 +88,8 @@ public class Message {
             throw new InvalidFixMessage("Invalid sender id: " + targetId);
         this.targetId = targetId;
     }
+
+    // Message Id -------------------------------
 
     public void setMessageId(String messageId) throws InvalidFixMessage {
         if (messageId == null) {
@@ -88,12 +104,24 @@ public class Message {
         this.messageId = messageId;
     }
 
+    // Instrument -------------------------------
+
+    public Instruments instrument() {
+        return Instruments.valueOf(instrument);
+    }
+
     public void setInstrument(String instrument) throws InvalidFixMessage {
         try {
             this.instrument = Instruments.valueOf(instrument.toUpperCase()).name();
         } catch (IllegalArgumentException e) {
             throw new InvalidFixMessage("Invalid instrument: " + instrument);
         }
+    }
+
+    // Quantity ---------------------------------
+
+    public Integer quantity() {
+        return Integer.valueOf(quantity);
     }
 
     public void setQuantity(String quantity) throws InvalidFixMessage {
@@ -104,6 +132,12 @@ public class Message {
         this.quantity = quantity;
     }
 
+    // Price ------------------------------------
+
+    public Integer price() {
+        return Integer.valueOf(price);
+    }
+
     public void setPrice(String price) throws InvalidFixMessage {
         if (price == null)
             return;
@@ -111,6 +145,8 @@ public class Message {
             throw new InvalidFixMessage("Invalid price: " + price);
         this.price = price;
     }
+
+    // Checksum ---------------------------------
 
     public void setChecksum(String checksum) throws InvalidFixMessage {
         if (checksum == null)
