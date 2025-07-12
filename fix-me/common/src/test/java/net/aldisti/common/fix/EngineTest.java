@@ -1,5 +1,6 @@
 package net.aldisti.common.fix;
 
+import net.aldisti.common.fix.constants.Instruments;
 import net.aldisti.common.fix.constants.MsgType;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,7 @@ class EngineTest {
         msg.setType(MsgType.ORDER.value);
         msg.setSenderId("220625");
         msg.setTargetId("526022");
-        msg.setInstrument("RKLB");
+        msg.setInstrument(Instruments.STOCK.name());
         msg.setQuantity("360");
         msg.setMarket("Something?");
         msg.setPrice("30");
