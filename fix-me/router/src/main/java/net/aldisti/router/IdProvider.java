@@ -1,4 +1,4 @@
-package net.aldisti.common.providers;
+package net.aldisti.router;
 
 public class IdProvider {
     private static int id = 100000;
