@@ -19,7 +19,7 @@ public abstract class Client extends Thread {
     protected static final Logger log = LoggerFactory.getLogger(Client.class);
 
     private final Socket socket;
-    protected final Queue<Message> queue;
+    protected final Queue<String> queue;
     @Getter
     private String clientId;
 
@@ -40,6 +40,7 @@ public abstract class Client extends Thread {
         ) {
             clientId = reader.readLine();
             log.info("Connected as client {}", clientId);
+            setName("Client#" + clientId);
             routine(reader, writer);
         } catch (IOException ioe) {
             log.error("Error: cannot send or receive messages", ioe);
@@ -56,7 +57,7 @@ public abstract class Client extends Thread {
             if (!queue.isEmpty())
                 writer.println(queue.poll());
 
-            if ((raw = reader.readLine()) == null)
+            if (!reader.ready() || (raw = reader.readLine()) == null)
                 continue;
 
             // deserialize message and validate it
@@ -84,7 +85,7 @@ public abstract class Client extends Thread {
      */
     public void send(Message msg) {
         msg.setSenderId(getClientId());
-        queue.add(msg);
+        queue.add(Engine.serialize(msg));
     }
 
     private Message deserialize(String raw) {
@@ -97,7 +98,7 @@ public abstract class Client extends Thread {
         }
     }
 
-    private void close() {
+    public void close() {
         try {
             socket.close();
         } catch (IOException e) {
