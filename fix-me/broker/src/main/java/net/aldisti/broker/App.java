@@ -1,16 +1,23 @@
 package net.aldisti.broker;
 
-import lombok.extern.slf4j.Slf4j;
 import net.aldisti.common.network.SharedQueueClient;
 import net.aldisti.common.network.Client;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import sun.misc.Signal;
 
-@Slf4j
 public class App {
+    private static final Logger log = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
 
         Broker broker = new Broker();
 
         Client client = new SharedQueueClient("127.0.0.1", 5000, broker.getQueue());
-        log.info("Client {} created", client.getClientId());
+        Thread.ofVirtual().start(client);
+
+        Signal.handle(new Signal("INT"), signal -> broker.stop());
+        broker.setClient(client);
+        broker.run();
     }
 }
