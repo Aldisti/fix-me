@@ -2,7 +2,7 @@ package net.aldisti.common.fix;
 
 import lombok.*;
 import net.aldisti.common.fix.constants.*;
-import org.apache.commons.lang3.StringUtils;
+import net.aldisti.common.utils.StringUtils;
 
 import java.util.UUID;
 

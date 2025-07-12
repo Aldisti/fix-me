@@ -2,7 +2,7 @@ package net.aldisti.common.fix;
 
 import lombok.extern.slf4j.Slf4j;
 import net.aldisti.common.fix.constants.Tag;
-import org.apache.commons.lang3.StringUtils;
+import net.aldisti.common.utils.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

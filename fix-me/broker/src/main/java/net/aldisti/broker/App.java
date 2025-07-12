@@ -10,7 +10,6 @@ public class App {
     private static final Logger log = LoggerFactory.getLogger(App.class);
 
     public static void main(String[] args) {
-
         Broker broker = new Broker();
 
         Client client = new SharedQueueClient("127.0.0.1", 5000, broker.getQueue());
