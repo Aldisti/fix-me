@@ -4,8 +4,6 @@ import lombok.Getter;
 import net.aldisti.common.fix.Engine;
 import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
-import net.aldisti.common.fix.constants.MsgType;
-import net.aldisti.common.providers.IdProvider;
 import net.aldisti.router.fix.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +24,15 @@ public class Client extends Thread {
     @Getter
     private final ClientType type;
     private final Socket socket;
-    private final Queue<String> msgQueue;
+    private final Queue<String> queue;
 
     private Dispatcher dispatcher = null;
 
     public Client(Socket socket, ClientType type) throws IOException {
         this.socket = socket;
         this.type = type;
-        this.clientId = IdProvider.generate();
-        this.msgQueue = new ConcurrentLinkedQueue<>();
+        this.clientId = IdProvider.next();
+        this.queue = new ConcurrentLinkedQueue<>();
         log.info("Client {} initialized", clientId);
     }
 
@@ -59,11 +57,11 @@ public class Client extends Thread {
         Message msg;
         while (socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown()) {
 
-            if (!msgQueue.isEmpty())
-                writer.println(msgQueue.remove());
+            if (!queue.isEmpty())
+                writer.println(queue.remove());
 
             // read incoming message
-            if ((raw = reader.readLine()) == null)
+            if (!reader.ready() || (raw = reader.readLine()) == null)
                 continue;
 
             // deserialize message and validate it
@@ -121,7 +119,8 @@ public class Client extends Thread {
      * @param msg A message to send.
      */
     public synchronized void sendMessage(String msg) {
-        msgQueue.offer(msg);
+        log.info("Sending to client {}: {}", clientId, msg);
+        queue.offer(msg);
     }
 
     /**
@@ -135,7 +134,7 @@ public class Client extends Thread {
         }
         if (dispatcher != null)
             dispatcher.unregister(clientId);
-        log.info("Client {} closed with {} non-sent messages", clientId, msgQueue.size());
+        log.info("Client {} closed with {} non-sent messages", clientId, queue.size());
     }
 
     /**
