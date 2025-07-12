@@ -14,28 +14,41 @@ public class Market {
     @Getter
     private final ConcurrentLinkedQueue<Message> queue;
     private final MarketContext context;
+    /**
+     * Interval in milliseconds between each market update.
+     */
+    private final int interval;
 
     private Client client;
 
     public Market() {
         this.queue = new ConcurrentLinkedQueue<>();
         this.context = MarketContext.getInstance();
+        this.interval = 35;
+    }
+
+    public Market(Integer interval) {
+        this.queue = new ConcurrentLinkedQueue<>();
+        this.context = MarketContext.getInstance();
+        this.interval = interval;
     }
 
     public void run() {
-        Instant time = Instant.now();
+        var time = System.currentTimeMillis();
+        log.info("Market starting with an update interval of {} ms", this.interval);
         while (true) {
             Message msg = queue.poll();
             if (msg != null)
                 handle(msg);
 
-            if (Instant.now().getNano() - time.getNano() < 35000)
+            if (System.currentTimeMillis() - time < interval)
                 continue;
             context.getAssetIds().forEach(id -> {
                 Asset asset = context.updateAsset(id);
-                client.send(MessageBuilder.notifyUpdate(asset));
+                if (asset.getPrice() != 0)
+                    client.send(MessageBuilder.notifyUpdate(asset));
             });
-            time = Instant.now();
+            time = System.currentTimeMillis();
         }
     }
 

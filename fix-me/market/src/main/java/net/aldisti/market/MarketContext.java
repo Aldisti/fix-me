@@ -59,7 +59,7 @@ public class MarketContext {
      */
     public final Asset updateAsset(String id) {
         Asset asset = assets.get(id);
-        if (asset != null)
+        if (asset != null && asset.getPrice() != 0)
             updateAsset(asset);
         return asset;
     }
@@ -72,7 +72,7 @@ public class MarketContext {
     }
 
     private void updateAsset(Asset asset) {
-        int percentage = RANDOM.nextInt(0, 100);
+        int percentage = RANDOM.nextInt(0, 50);
         boolean sign = RANDOM.nextBoolean();
         int price = asset.getPrice();
         // calculate the difference to add or subtract
