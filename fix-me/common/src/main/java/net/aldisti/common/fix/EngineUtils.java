@@ -37,6 +37,8 @@ class EngineUtils {
             log.error("Error while invoking {}", getterName, e);
             throw new InvalidFixMessage("Cannot invoke getter method for field " + tag.field);
         }
+        if (value == null)
+            return null;
         return tag.value + TAGVALUE_SEPARATOR + value;
     }
 

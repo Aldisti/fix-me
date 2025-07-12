@@ -15,6 +15,8 @@ public class Engine {
             if (tag == Tag.BODY_LENGTH || tag == Tag.CHECKSUM)
                 continue;
             String tagValue = EngineUtils.getTagValue(message, tag);
+            if (tagValue == null)
+                continue;
             length += tagValue.length() + 1; // the +1 is for the separator
             pairs.add(tagValue);
         }
