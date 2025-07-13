@@ -60,6 +60,12 @@ public class BrokerContext {
                 (v == null) ? new TradedAsset(msg) : v.update(msg.price()));
     }
 
+    public Integer getNetWorth() {
+        return balance + assets.values().parallelStream()
+                .reduce(0, (partial, asset) ->
+                        partial + asset.getPrice() * asset.getQuantity(), Integer::sum);
+    }
+
     private static String getKey(final Message msg) {
         return msg.getSenderId() + "|" + msg.getAssetId();
     }
