@@ -20,6 +20,8 @@ public final class SharedQueueClient extends Client {
 
     @Override
     protected void receive(Message msg) {
+        if (msg == null)
+            return;
         if (!queue.offer(msg))
             log.info("Couldn't add message to queue: {}", msg);
     }

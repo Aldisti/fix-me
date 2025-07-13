@@ -1,6 +1,5 @@
 package net.aldisti.common.network;
 
-import lombok.Getter;
 import net.aldisti.common.fix.Engine;
 import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
@@ -20,7 +19,6 @@ public abstract class Client extends Thread {
 
     private final Socket socket;
     protected final Queue<String> queue;
-    @Getter
     private String clientId;
 
     public Client(String host, int port) throws InvalidClientConnection {
@@ -53,20 +51,13 @@ public abstract class Client extends Thread {
     private void routine(BufferedReader reader, PrintWriter writer) throws IOException {
         String raw;
         while (socket.isConnected() && !socket.isOutputShutdown() && !socket.isInputShutdown()) {
-
             if (!queue.isEmpty())
                 writer.println(queue.poll());
-
+            // read incoming message, if there is one
             if (!reader.ready() || (raw = reader.readLine()) == null)
                 continue;
-
-            // deserialize message and validate it
-            Message msg = deserialize(raw);
-            if (msg == null)
-                continue;
-
-            // do something with the message
-            receive(msg);
+            // deserialize message, validate it and use it
+            receive(deserialize(raw));
         }
     }
 
@@ -92,7 +83,7 @@ public abstract class Client extends Thread {
         try { // handle deserialization errors
             return Engine.deserialize(raw);
         } catch (InvalidFixMessage e) {
-            log.error("Received invalid fix message", e);
+            log.error("Received invalid fix message in {}", getName(), e);
             log.info("Message: {}", raw);
             return null;
         }
@@ -105,5 +96,9 @@ public abstract class Client extends Thread {
             log.error("Error while closing connection", e);
         }
         log.info("Connection closed");
+    }
+
+    public String getClientId() {
+        return this.clientId;
     }
 }
