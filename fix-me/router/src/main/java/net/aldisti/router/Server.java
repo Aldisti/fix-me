@@ -27,11 +27,13 @@ public class Server extends Thread {
             try {
                 client = new Client(socket.accept(), type);
             } catch (IOException e) {
-                log.error("Couldn't accept client connection", e);
+                if (!e.getMessage().contains("interrupt"))
+                    log.error("Couldn't accept client connection", e);
                 continue;
             }
             dispatcher.register(client);
             Thread.ofVirtual().start(client);
         }
+        log.info("{} server stopped", type.name());
     }
 }
