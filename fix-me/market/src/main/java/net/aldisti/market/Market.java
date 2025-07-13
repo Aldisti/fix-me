@@ -1,25 +1,23 @@
 package net.aldisti.market;
 
-import lombok.Getter;
 import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
 import net.aldisti.common.network.Client;
 import org.slf4j.Logger;
 
-import java.time.Instant;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Market {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(Market.class);
-    @Getter
+
     private final ConcurrentLinkedQueue<Message> queue;
     private final MarketContext context;
     /**
      * Interval in milliseconds between each market update.
      */
     private final int interval;
-
     private Client client;
+    private boolean status = true;
 
     public Market() {
         this.queue = new ConcurrentLinkedQueue<>();
@@ -33,13 +31,12 @@ public class Market {
         this.interval = interval;
     }
 
-    public void run() {
-        var time = System.currentTimeMillis();
+    public void run(Client client) {
         log.info("Market starting with an update interval of {} ms", this.interval);
-        while (true) {
-            Message msg = queue.poll();
-            if (msg != null)
-                handle(msg);
+        this.client = client;
+        long time = System.currentTimeMillis();
+        while (status) {
+            handle(queue.poll());
 
             if (System.currentTimeMillis() - time < interval)
                 continue;
@@ -50,9 +47,17 @@ public class Market {
             });
             time = System.currentTimeMillis();
         }
+        client.close();
+    }
+
+    public void stop() {
+        status = false;
+        log.info("Gracefully stopping");
     }
 
     private void handle(Message msg) {
+        if (msg == null) return;
+
         switch (msg.type()) {
             case BUY -> buy(msg);
             case SELL -> sell(msg);
@@ -78,8 +83,7 @@ public class Market {
         client.send(MessageBuilder.error(msg));
     }
 
-    public void setClient(Client client) {
-        if (this.client == null)
-            this.client = client;
+    public ConcurrentLinkedQueue<Message> getQueue() {
+        return this.queue;
     }
 }

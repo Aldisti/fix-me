@@ -1,6 +1,5 @@
 package net.aldisti.broker;
 
-import lombok.Getter;
 import net.aldisti.broker.fix.MessageBuilder;
 import net.aldisti.common.fix.Message;
 import net.aldisti.common.network.Client;
@@ -10,59 +9,72 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class Broker {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(Broker.class);
 
-    private boolean running = false;
-
-    @Getter
+    /**
+     * A queue for all incoming messages.
+     */
     private final BlockingQueue<Message> queue;
     /**
      * Pending orders., the key is {@link Message#getMessageId() messageId}.
      */
     private final Map<String, Message> pending;
+    /**
+     * The broker context, where all the assets are managed.
+     */
     private final BrokerContext context;
-
     private Client client;
+    private boolean status;
 
     public Broker() {
         this.queue = new ArrayBlockingQueue<>(1024);
         this.pending = new HashMap<>();
         this.context = new BrokerContext();
+        this.status = true;
     }
 
-    public void run() {
-        running = true;
-        while (running) {
-            try {
-                Message msg = queue.poll(50, TimeUnit.MILLISECONDS);
-                if (msg != null)
-                    handle(msg);
-            } catch (InterruptedException e) {
-                log.info("Broker interrupted");
-                break;
-            }
+    public void run(Client client) {
+        this.client = client;
+
+        try {
+            while (status)
+                handle(queue.take());
+        } catch (InterruptedException e) {
+            log.warn("Broker interrupted");
+        } finally {
+            log.info("Shutting down");
+            client.close();
+            int balance = context.getBalance();
+            System.out.printf("\nInitial balance: %s\nFinal balance: %s\n", BrokerContext.INITIAL_BALANCE, context.getNetWorth());
         }
-        client.close();
     }
 
     public void stop() {
-        log.info("Broker shutting down...");
-        running = false;
-        int balance = context.getBalance();
-        log.info("\nInitial balance: {}\nFinal balance: {}", BrokerContext.INITIAL_BALANCE, balance);
+        status = false;
+        if (!queue.offer(new Message())) {
+            log.error("Broker queue is full, cannot add empty message");
+            System.exit(1); // this code should never execute
+        }
     }
 
     private void handle(Message msg) {
+        if (msg.getType() == null) return;
+
         switch (msg.type()) {
             case EXECUTED -> executed(msg);
             case REJECTED -> rejected(msg);
             case NOTIFY -> notify(msg);
+            default -> log.warn("Unknown message type: {}", msg.type());
         }
     }
 
+    /**
+     * Handles an incoming
+     * {@link net.aldisti.common.fix.constants.MsgType#EXECUTED EXECUTED}
+     * message.
+     */
     private void executed(Message msg) {
         Message order = pending.remove(msg.getMessageId());
         if (order == null) {
@@ -79,6 +91,11 @@ public class Broker {
         }
     }
 
+    /**
+     * Handles an incoming
+     * {@link net.aldisti.common.fix.constants.MsgType#REJECTED REJECTED}
+     * message.
+     */
     private void rejected(Message msg) {
         Message order = pending.remove(msg.getMessageId());
         if (order == null) {
@@ -89,6 +106,12 @@ public class Broker {
         log.warn("Order {} has been rejected: {}", msg.getMessageId(), order);
     }
 
+    /**
+     * Handles an incoming
+     * {@link net.aldisti.common.fix.constants.MsgType#NOTIFY NOTIFY}
+     * message.<br>
+     * Here happens most of the buy/sell logic.
+     */
     private void notify(Message msg) {
         final TradedAsset asset = context.addOrUpdate(msg);
 
@@ -107,15 +130,19 @@ public class Broker {
         }
     }
 
-    public void setClient(Client client) {
-        if (this.client == null)
-            this.client = client;
-    }
-
+    /**
+     * Puts a message in the pending list
+     * and then sends it to the client.<br>
+     * It's <b>null-safe</b>.
+     */
     private void send(Message msg) {
         if (msg == null) return;
 
         pending.put(msg.getMessageId(), msg);
         client.send(msg);
+    }
+
+    public BlockingQueue<Message> getQueue() {
+        return this.queue;
     }
 }

@@ -15,8 +15,8 @@ public class App {
         Client client = new SharedQueueClient("127.0.0.1", 5000, broker.getQueue());
         Thread.ofVirtual().start(client);
 
-        Signal.handle(new Signal("INT"), signal -> broker.stop());
-        broker.setClient(client);
-        broker.run();
+        Signal.handle(new Signal("INT"), (signal) -> broker.stop());
+
+        broker.run(client);
     }
 }
