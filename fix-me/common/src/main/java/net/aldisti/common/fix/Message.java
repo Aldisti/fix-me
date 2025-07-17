@@ -2,9 +2,12 @@ package net.aldisti.common.fix;
 
 import lombok.*;
 import net.aldisti.common.fix.constants.*;
-import net.aldisti.common.utils.StringUtils;
+import net.aldisti.common.fix.validators.ValidatorException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * All the setters of this class perform validation checks.
@@ -14,6 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode
 @ToString
 public class Message {
+    private static final Logger log = LoggerFactory.getLogger(Message.class);
     /**
      * This is the separator used between each tag-value pair.
      */
@@ -23,136 +27,46 @@ public class Message {
      */
     public static final String TAGVALUE_SEPARATOR = "=";
 
-    private String bodyLength;
-    private String type;
-    private String senderId;
-    private String targetId;
-    private String messageId;
-    private String instrument;
-    @Setter
-    private String assetId;
-    private String quantity;
-    @Setter
-    private String market;
-    private String price;
-    private String checksum;
+    private final Map<Tag, String> attributes;
 
     public Message() {
-        messageId = UUID.randomUUID().toString();
+        attributes = new HashMap<>();
     }
 
-    // Body Length ------------------------------
-
-    public void setBodyLength(String bodyLength) throws InvalidFixMessage {
-        if (bodyLength == null)
-            return;
-        if (!bodyLength.matches("^\\d+$"))
-            throw new InvalidFixMessage("Invalid body length: " + bodyLength);
-        this.bodyLength = bodyLength;
+    public String get(Tag tag) {
+        return attributes.get(tag);
     }
 
-    // Type -------------------------------------
-
-    public MsgType type() {
-        return MsgType.valueOf(type);
+    public String getTagValue(Tag tag) {
+        String attribute = attributes.get(tag);
+        if (attribute == null)
+            return "";
+        return tag.value() + TAGVALUE_SEPARATOR + attribute;
     }
 
-    public String getType() {
-        if (type == null)
-            return null;
-        return MsgType.valueOf(type).value;
+    public Integer getInt(Tag tag) {
+        return Integer.parseInt(attributes.get(tag));
     }
 
-    public void setType(String type) throws InvalidFixMessage {
-        if (type == null)
-            return;
-        this.type = MsgType.fromValue(type).name();
+    public Message add(Tag tag, String value) {
+        attributes.put(tag, value);
+        return this;
     }
 
-    // Sender Id --------------------------------
-
-    public void setSenderId(String senderId) throws InvalidFixMessage {
-        if (senderId == null)
-            return;
-        if (!senderId.matches("^\\d{6}$"))
-            throw new InvalidFixMessage("Invalid sender id: " + senderId);
-        this.senderId = senderId;
+    public Message remove(Tag tag) {
+        attributes.remove(tag);
+        return this;
     }
 
-    // Target Id --------------------------------
-
-    public void setTargetId(String targetId) throws InvalidFixMessage {
-        if (targetId == null)
-            return;
-        if (!targetId.matches("^\\d{6}$"))
-            throw new InvalidFixMessage("Invalid sender id: " + targetId);
-        this.targetId = targetId;
-    }
-
-    // Message Id -------------------------------
-
-    public void setMessageId(String messageId) throws InvalidFixMessage {
-        if (messageId == null) {
-            this.messageId = null;
-            return;
-        }
+    public boolean isValid() {
         try {
-            UUID.fromString(messageId); // should throw if messageId is not a UUID
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFixMessage("Invalid message id: " + messageId);
+            for (Map.Entry<Tag, String> entry : attributes.entrySet())
+                if (entry.getKey().validator() != null)
+                    entry.getKey().validator().validate(entry.getValue());
+            return true;
+        } catch (ValidatorException ve) {
+            log.info(ve.getMessage());
+            return false;
         }
-        this.messageId = messageId;
-    }
-
-    // Instrument -------------------------------
-
-    public Instruments instrument() {
-        return Instruments.valueOf(instrument);
-    }
-
-    public void setInstrument(String instrument) throws InvalidFixMessage {
-        try {
-            this.instrument = Instruments.valueOf(instrument.toUpperCase()).name();
-        } catch (IllegalArgumentException e) {
-            throw new InvalidFixMessage("Invalid instrument: " + instrument);
-        }
-    }
-
-    // Quantity ---------------------------------
-
-    public Integer quantity() {
-        return Integer.valueOf(quantity);
-    }
-
-    public void setQuantity(String quantity) throws InvalidFixMessage {
-        if (quantity == null)
-            return;
-        if (!quantity.matches("^\\d+$"))
-            throw new InvalidFixMessage("Invalid quantity: " + quantity);
-        this.quantity = quantity;
-    }
-
-    // Price ------------------------------------
-
-    public Integer price() {
-        return Integer.valueOf(price);
-    }
-
-    public void setPrice(String price) throws InvalidFixMessage {
-        if (price == null)
-            return;
-        if (!price.matches("^\\d+$"))
-            throw new InvalidFixMessage("Invalid price: " + price);
-        this.price = price;
-    }
-
-    // Checksum ---------------------------------
-
-    public void setChecksum(String checksum) throws InvalidFixMessage {
-        if (checksum == null)
-            return;
-        if (!checksum.matches("^\\d{1,3}$"))
-            throw new InvalidFixMessage("Invalid checksum: " + checksum);
-        this.checksum = StringUtils.leftPad(checksum, 3, '0');
     }
 }
