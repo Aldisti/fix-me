@@ -2,6 +2,7 @@ package net.aldisti.broker;
 
 import net.aldisti.broker.fix.MessageBuilder;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
 import org.slf4j.Logger;
 
@@ -18,7 +19,7 @@ public class Broker {
      */
     private final BlockingQueue<Message> queue;
     /**
-     * Pending orders., the key is {@link Message#getMessageId() messageId}.
+     * Pending orders., the key is the message id.
      */
     private final Map<String, Message> pending;
     /**
@@ -60,7 +61,7 @@ public class Broker {
     }
 
     private void handle(Message msg) {
-        if (msg.getType() == null) return;
+        if (msg.type() == null) return;
 
         switch (msg.type()) {
             case EXECUTED -> executed(msg);
@@ -76,9 +77,9 @@ public class Broker {
      * message.
      */
     private void executed(Message msg) {
-        Message order = pending.remove(msg.getMessageId());
+        Message order = pending.remove(msg.get(Tag.MESSAGE_ID));
         if (order == null) {
-            log.error("Non-existent order with id: {} has been executed", msg.getMessageId());
+            log.error("Non-existent order with id: {} has been executed", msg.get(Tag.MESSAGE_ID));
             return;
         }
 
@@ -97,13 +98,13 @@ public class Broker {
      * message.
      */
     private void rejected(Message msg) {
-        Message order = pending.remove(msg.getMessageId());
+        Message order = pending.remove(msg.get(Tag.MESSAGE_ID));
         if (order == null) {
-            log.error("Non-existent order with id: {} has been rejected", msg.getMessageId());
+            log.error("Non-existent order with id: {} has been rejected", msg.get(Tag.MESSAGE_ID));
             return;
         }
         context.restoreRejected(order);
-        log.warn("Order {} has been rejected: {}", msg.getMessageId(), order);
+        log.warn("Order {} has been rejected: {}", msg.get(Tag.MESSAGE_ID), order);
     }
 
     /**
@@ -138,7 +139,7 @@ public class Broker {
     private void send(Message msg) {
         if (msg == null) return;
 
-        pending.put(msg.getMessageId(), msg);
+        pending.put(msg.get(Tag.MESSAGE_ID), msg);
         client.send(msg);
     }
 
