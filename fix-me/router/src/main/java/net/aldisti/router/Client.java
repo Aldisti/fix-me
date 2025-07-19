@@ -4,6 +4,7 @@ import lombok.Getter;
 import net.aldisti.common.fix.Engine;
 import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.router.fix.MessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,22 +76,22 @@ public class Client extends Thread {
     }
 
     private void handle(Message msg, final String raw) {
-        if (!clientId.toString().equals(msg.getSenderId())) { // validate sender id
-            log.warn("Client {} sent message with wrong senderId {}", clientId, msg.getSenderId());
+        if (!clientId.toString().equals(msg.get(Tag.SENDER_ID))) { // validate sender id
+            log.warn("Client {} sent message with wrong senderId {}", clientId, msg.get(Tag.SENDER_ID));
             sendMessage(Engine.serialize(MessageBuilder.invalidSender(msg, clientId)));
             return;
         }
-        if (type == ClientType.MARKET && msg.getTargetId() == null) {
+        if (type == ClientType.MARKET && msg.get(Tag.TARGET_ID) == null) {
             log.info("Client {} sent message to all brokers", clientId);
             dispatcher.sendAll(raw);
             return;
-        } else if (msg.getTargetId() == null) {
+        } else if (msg.get(Tag.TARGET_ID) == null) {
             log.warn("Client {} sent message with no target", clientId);
             sendMessage(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
             return;
         }
 
-        int targetId = Integer.parseInt(msg.getTargetId());
+        int targetId = Integer.parseInt(msg.get(Tag.TARGET_ID));
 
         if (!dispatcher.exists(targetId)) {
             log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
