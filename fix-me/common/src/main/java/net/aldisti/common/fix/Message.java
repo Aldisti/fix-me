@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * All the setters of this class perform validation checks.
@@ -31,6 +32,7 @@ public class Message {
 
     public Message() {
         attributes = new HashMap<>();
+        attributes.put(Tag.MESSAGE_ID, UUID.randomUUID().toString());
     }
 
     public String get(Tag tag) {

@@ -10,19 +10,19 @@ import static org.junit.jupiter.api.Assertions.*;
 class EngineTest {
     @Test
     void integration() {
-        var msg = new Message();
-        msg.add(Tag.TYPE, MsgType.ORDER.value);
-        msg.add(Tag.SENDER_ID, "220625");
-        msg.add(Tag.TARGET_ID, "526022");
-        msg.add(Tag.INSTRUMENT, Instruments.STOCK.name());
-        msg.add(Tag.QUANTITY, "360");
-        msg.add(Tag.MARKET, "Something?");
-        msg.add(Tag.PRICE, "30");
+        Message msg = new Message()
+                .add(Tag.TYPE, MsgType.ORDER.value)
+                .add(Tag.SENDER_ID, "220625")
+                .add(Tag.TARGET_ID, "526022")
+                .add(Tag.INSTRUMENT, Instruments.STOCK.name())
+                .add(Tag.QUANTITY, "360")
+                .add(Tag.MARKET, "Something?")
+                .add(Tag.PRICE, "30");
 
-        var serialized = Engine.serialize(msg);
+        String serialized = Engine.marshall(msg);
         assertNotNull(serialized);
 
-        var deserialized = Engine.deserialize(serialized);
+        Message deserialized = Engine.unmarshall(serialized);
         assertNotNull(deserialized);
 
         assertEquals(msg.get(Tag.TYPE), deserialized.get(Tag.TYPE));

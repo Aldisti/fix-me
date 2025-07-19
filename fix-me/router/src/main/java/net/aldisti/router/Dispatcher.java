@@ -87,7 +87,7 @@ public class Dispatcher {
      */
     public synchronized void sendTo(int clientId, Message msg) {
         if (exists(clientId))
-            clients.get(clientId).sendMessage(Engine.serialize(msg));
+            clients.get(clientId).sendMessage(Engine.marshall(msg));
     }
 
     /**
@@ -109,7 +109,7 @@ public class Dispatcher {
      * @see #sendAll(String)
      */
     public synchronized void sendAll(Message msg) {
-        String raw = Engine.serialize(msg);
+        String raw = Engine.marshall(msg);
         clients.keySet().forEach(id -> {
             Client client = clients.get(id);
             if (client != null && client.getType() == ClientType.BROKER)

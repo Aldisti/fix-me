@@ -65,9 +65,9 @@ public class Client extends Thread {
             if (!reader.ready() || (raw = reader.readLine()) == null)
                 continue;
 
-            // deserialize message and validate it
-            if ((msg = deserialize(raw)) == null) {
-                writer.println(Engine.serialize(MessageBuilder.invalidMessage(clientId)));
+            // unmarshall message and validate it
+            if ((msg = unmarshall(raw)) == null) {
+                writer.println(Engine.marshall(MessageBuilder.invalidMessage(clientId)));
                 continue;
             }
 
@@ -78,7 +78,7 @@ public class Client extends Thread {
     private void handle(Message msg, final String raw) {
         if (!clientId.toString().equals(msg.get(Tag.SENDER_ID))) { // validate sender id
             log.warn("Client {} sent message with wrong senderId {}", clientId, msg.get(Tag.SENDER_ID));
-            sendMessage(Engine.serialize(MessageBuilder.invalidSender(msg, clientId)));
+            sendMessage(Engine.marshall(MessageBuilder.invalidSender(msg, clientId)));
             return;
         }
         if (type == ClientType.MARKET && msg.get(Tag.TARGET_ID) == null) {
@@ -87,7 +87,7 @@ public class Client extends Thread {
             return;
         } else if (msg.get(Tag.TARGET_ID) == null) {
             log.warn("Client {} sent message with no target", clientId);
-            sendMessage(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
+            sendMessage(Engine.marshall(MessageBuilder.invalidTarget(msg, clientId)));
             return;
         }
 
@@ -95,18 +95,18 @@ public class Client extends Thread {
 
         if (!dispatcher.exists(targetId)) {
             log.warn("Client {} is trying to send message to non-existing targetId {}", clientId, targetId);
-            sendMessage(Engine.serialize(MessageBuilder.invalidTarget(msg, clientId)));
+            sendMessage(Engine.marshall(MessageBuilder.invalidTarget(msg, clientId)));
         } else if (type == ClientType.BROKER && dispatcher.getClientType(targetId) == ClientType.BROKER) {
             log.warn("Client {} is trying to send message to a {}", clientId, ClientType.BROKER.name());
-            sendMessage(Engine.serialize(MessageBuilder.invalidMessage(clientId)));
+            sendMessage(Engine.marshall(MessageBuilder.invalidMessage(clientId)));
         } else { // forward message
             dispatcher.sendTo(targetId, raw);
         }
     }
 
-    private Message deserialize(String raw) {
+    private Message unmarshall(String raw) {
         try {
-            return Engine.deserialize(raw);
+            return Engine.unmarshall(raw);
         } catch (InvalidFixMessage e) { // handle deserialization errors
             log.error("Client {} sent invalid message", clientId, e);
             log.info("Message: {}", raw);

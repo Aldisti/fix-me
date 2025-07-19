@@ -77,12 +77,12 @@ public abstract class Client extends Thread {
      */
     public void send(Message msg) {
         msg.add(Tag.SENDER_ID, getClientId());
-        queue.add(Engine.serialize(msg));
+        queue.add(Engine.marshall(msg));
     }
 
     private Message deserialize(String raw) {
         try { // handle deserialization errors
-            return Engine.deserialize(raw);
+            return Engine.unmarshall(raw);
         } catch (InvalidFixMessage e) {
             log.error("Received invalid fix message in {}", getName(), e);
             log.info("Message: {}", raw);
