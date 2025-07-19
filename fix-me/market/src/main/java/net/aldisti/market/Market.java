@@ -2,6 +2,7 @@ package net.aldisti.market;
 
 import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
 import org.slf4j.Logger;
 
@@ -66,14 +67,14 @@ public class Market {
     }
 
     private void buy(Message msg) {
-        if (context.buyAsset(msg.getAssetId(), msg.quantity(), msg.price()))
+        if (context.buyAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE)))
             client.send(MessageBuilder.executed(msg));
         else
             client.send(MessageBuilder.rejected(msg));
     }
 
     private void sell(Message msg) {
-        if (context.sellAsset(msg.getAssetId(), msg.quantity(), msg.price()))
+        if (context.sellAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE)))
             client.send(MessageBuilder.executed(msg));
         else
             client.send(MessageBuilder.rejected(msg));
