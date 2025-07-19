@@ -4,18 +4,17 @@ import net.aldisti.common.fix.constants.Tag;
 
 import java.util.stream.Collectors;
 
-import static net.aldisti.common.fix.Message.SEPARATOR;
+import static net.aldisti.common.fix.Message.TAG_SEP;
 
 public class Engine {
     public static String marshall(Message message) throws InvalidFixMessage {
-        if (!message.isValid())
+        if (message.isNotValid())
             throw new InvalidFixMessage("Invalid FIX message");
 
-        String body = message.getAttributes().entrySet().stream()
-                .filter(e -> e.getValue() != null)
-                .filter(e -> e.getKey() != Tag.BODY_LENGTH && e.getKey() != Tag.CHECKSUM)
-                .map(e -> message.getTagValue(e.getKey()))
-                .collect(Collectors.joining(SEPARATOR));
+        String body = message.getAttributes().keySet().stream()
+                .filter(s -> s != Tag.BODY_LENGTH && s != Tag.CHECKSUM)
+                .map(message::getTagValue)
+                .collect(Collectors.joining(TAG_SEP));
 
         return EngineUtils.addChecksum(EngineUtils.addBodyLength(body));
     }
@@ -27,12 +26,12 @@ public class Engine {
     public static Message unmarshall(String msg) throws InvalidFixMessage {
         EngineUtils.verifyIntegrity(msg);
         Message message = new Message();
-        String[] tagValues = msg.split(SEPARATOR);
+        String[] tagValues = msg.split(TAG_SEP);
         for (String rawTagValue : tagValues) {
             var tagValue = EngineUtils.extractTagValue(rawTagValue);
             message.add(tagValue.getKey(), tagValue.getValue());
         }
-        if (!message.isValid())
+        if (message.isNotValid())
             throw new InvalidFixMessage("Invalid FIX message");
         return message;
     }

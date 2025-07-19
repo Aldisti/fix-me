@@ -31,6 +31,14 @@ public enum Tag {
         this.validator = validator;
     }
 
+    public int value() {
+        return value;
+    }
+
+    public TagValueValidator validator() {
+        return validator;
+    }
+
     public static Tag fromValue(String value) {
         int needle;
         try {
@@ -44,13 +52,5 @@ public enum Tag {
                 return tag;
         }
         throw new InvalidFixMessage("Invalid tag, " + value + " not found");
-    }
-
-    public int value() {
-        return value;
-    }
-
-    public TagValueValidator validator() {
-        return validator;
     }
 }
