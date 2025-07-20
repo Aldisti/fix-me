@@ -2,48 +2,40 @@ package net.aldisti.common.fix;
 
 import net.aldisti.common.fix.constants.Tag;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
-import static net.aldisti.common.fix.Message.TAGVALUE_SEPARATOR;
+import static net.aldisti.common.fix.Message.TAG_SEP;
 
 public class Engine {
-    public static String serialize(Message message) throws InvalidFixMessage {
-        List<String> pairs = new ArrayList<>();
-        int length = 0;
-        for (Tag tag : Tag.values()) {
-            if (tag == Tag.BODY_LENGTH || tag == Tag.CHECKSUM)
-                continue;
-            String tagValue = EngineUtils.getTagValue(message, tag);
-            if (tagValue == null)
-                continue;
-            length += tagValue.length() + 1; // the +1 is for the separator
-            pairs.add(tagValue);
-        }
-        message.setBodyLength(Integer.toString(length));
-        pairs.addFirst(EngineUtils.getTagValue(message, Tag.BODY_LENGTH));
+    /**
+     * Marshalls a {@link Message} into a string representation of it.
+     */
+    public static String marshall(Message message) throws InvalidFixMessage {
+        if (message.isNotValid())
+            throw new InvalidFixMessage("Invalid FIX message");
 
-        String rawMessage = String.join(Message.SEPARATOR, pairs);
+        String body = message.getAttributes().keySet().stream()
+                .filter(s -> s != Tag.BODY_LENGTH && s != Tag.CHECKSUM)
+                .map(message::getTagValue)
+                .collect(Collectors.joining(TAG_SEP));
 
-        message.setChecksum(Integer.toString(EngineUtils.calculateChecksum(rawMessage)));
-
-        return rawMessage + Message.SEPARATOR + EngineUtils.getTagValue(message, Tag.CHECKSUM);
+        return EngineUtils.addChecksum(EngineUtils.addBodyLength(body));
     }
 
-    public static Message deserialize(String msg) throws InvalidFixMessage {
+    /**
+     * Unmarshalls a string representation into a {@link Message} object and
+     * validates it.
+     */
+    public static Message unmarshall(String msg) throws InvalidFixMessage {
         EngineUtils.verifyIntegrity(msg);
         Message message = new Message();
-        // the message id needs to be set at null
-        message.setMessageId(null);
-        String[] tagValues = msg.split(Message.SEPARATOR);
-        for (String tagValue : tagValues) {
-            if (tagValue == null || tagValue.isEmpty())
-                throw new InvalidFixMessage("Empty or null tag/value pair");
-            String[] pair = tagValue.split(TAGVALUE_SEPARATOR, 2);
-            if (pair.length != 2)
-                throw new InvalidFixMessage("Invalid tag/value pair: " + tagValue);
-            EngineUtils.setTagValue(message, pair[0], pair[1]);
+        String[] tagValues = msg.split(TAG_SEP);
+        for (String rawTagValue : tagValues) {
+            var tagValue = EngineUtils.extractTagValue(rawTagValue);
+            message.add(tagValue.getKey(), tagValue.getValue());
         }
+        if (message.isNotValid())
+            throw new InvalidFixMessage("Invalid FIX message");
         return message;
     }
 }

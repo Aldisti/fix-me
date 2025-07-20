@@ -3,6 +3,7 @@ package net.aldisti.common.network;
 import net.aldisti.common.fix.Engine;
 import net.aldisti.common.fix.InvalidFixMessage;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,13 +76,13 @@ public abstract class Client extends Thread {
      * @param msg A message to send.
      */
     public void send(Message msg) {
-        msg.setSenderId(getClientId());
-        queue.add(Engine.serialize(msg));
+        msg.add(Tag.SENDER_ID, getClientId());
+        queue.add(Engine.marshall(msg));
     }
 
     private Message deserialize(String raw) {
         try { // handle deserialization errors
-            return Engine.deserialize(raw);
+            return Engine.unmarshall(raw);
         } catch (InvalidFixMessage e) {
             log.error("Received invalid fix message in {}", getName(), e);
             log.info("Message: {}", raw);

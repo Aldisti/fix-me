@@ -3,6 +3,7 @@ package net.aldisti.broker;
 import lombok.Getter;
 import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Tag;
 
 @Getter
 public class TradedAsset {
@@ -23,14 +24,14 @@ public class TradedAsset {
 
     public TradedAsset(Message msg) {
         this.asset = Asset.builder()
-                .id(msg.getAssetId())
+                .id(msg.get(Tag.ASSET_ID))
                 .name("N/A")
                 .instrument(msg.instrument())
                 .build();
-        this.marketId = msg.getSenderId();
+        this.marketId = msg.get(Tag.SENDER_ID);
         this.paid = 0;
         this.quantity = 0;
-        this.price = msg.price();
+        this.price = msg.getInt(Tag.PRICE);
     }
 
     /**

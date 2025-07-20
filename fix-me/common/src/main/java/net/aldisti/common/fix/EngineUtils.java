@@ -1,53 +1,49 @@
 package net.aldisti.common.fix;
 
-import lombok.extern.slf4j.Slf4j;
 import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.utils.StringUtils;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.Map;
 
-import static net.aldisti.common.fix.Message.TAGVALUE_SEPARATOR;
-import static net.aldisti.common.fix.Message.SEPARATOR;
+import static net.aldisti.common.fix.Message.TAGVALUE_SEP;
+import static net.aldisti.common.fix.Message.TAG_SEP;
 
-@Slf4j
 class EngineUtils {
+    private EngineUtils() {}
+
     /**
      * This regex checks if a FIX message starts with a BodyLength tag
      * and ends with a Checksum tag.
      */
-    static final String INTEGRITY_REGEX = "^(" + Tag.BODY_LENGTH.value
-            + TAGVALUE_SEPARATOR + "\\d+)" + SEPARATOR + "(.+)" + SEPARATOR
-            + "(" + Tag.CHECKSUM.value + TAGVALUE_SEPARATOR + "\\d{3})$";
+    private static final String INTEGRITY_REGEX = "^(" + Tag.BODY_LENGTH.value()
+            + TAGVALUE_SEP + "\\d+)" + TAG_SEP + "(.+)" + TAG_SEP
+            + "(" + Tag.CHECKSUM.value() + TAGVALUE_SEP + "\\d{3})$";
 
-    static void setTagValue(Message message, String tagValue, String value) throws InvalidFixMessage {
-        Tag tag = Tag.fromValue(tagValue);
-        setTag(message, tag, value);
+    /**
+     * Adds the body length tag-value to the beginning of a message.
+     */
+    static String addBodyLength(String body) {
+        return Tag.BODY_LENGTH.value() + TAGVALUE_SEP + body.length() + TAG_SEP + body;
     }
 
-    static String getTagValue(Message message, Tag tag) {
-        String getterName = "get" + StringUtils.capitalize(tag.field);
-
-        String value;
-        try {
-            value = (String) getMethod(message.getClass(), getterName).invoke(message);
-        } catch (InvocationTargetException | IllegalAccessException e) {
-            log.error("Error while invoking {}", getterName, e);
-            throw new InvalidFixMessage("Cannot invoke getter method for field " + tag.field);
-        }
-        if (value == null)
-            return null;
-        return tag.value + TAGVALUE_SEPARATOR + value;
+    /**
+     * Calculates and adds the checksum tag-value to the end of a message.
+     */
+    static String addChecksum(String body) {
+        String checksum = StringUtils.leftPad(calculateChecksum(body).toString(), 3, '0');
+        return body + TAG_SEP + Tag.CHECKSUM.value()
+                + TAGVALUE_SEP + checksum;
     }
 
-    static int calculateChecksum(String rawMessage) {
-        int sum = 0;
-        for (Byte b : rawMessage.getBytes(StandardCharsets.UTF_8)) {
-            sum += b;
-        }
-        return sum % 256;
+    /**
+     * Extracts a pair of {@link Tag}-{@code String} from a tag-value representation.
+     */
+    static Map.Entry<Tag, String> extractTagValue(String tagValue) throws InvalidFixMessage {
+        String[] parts = StringUtils.strip(tagValue, TAG_SEP).split(TAGVALUE_SEP, 2);
+        if (parts.length != 2)
+            throw new InvalidFixMessage("Invalid tag value, found " + parts.length + " parts");
+        return Map.entry(Tag.fromValue(parts[0]), parts[1]);
     }
 
     /**
@@ -68,26 +64,6 @@ class EngineUtils {
     }
 
     /**
-     * Verifies the checksum of a full FIX message.
-     * <br>
-     * The message MUST contain the Checksum field and MUST have at least another field.
-     *
-     * @param rawMessage The FIX message to check, the Checksum field MUST be present.
-     * @throws InvalidFixMessage If the checksum doesn't match.
-     */
-    static void verifyChecksum(String rawMessage) throws InvalidFixMessage {
-        // search the last tag-value
-        int lastSeparator = rawMessage.lastIndexOf(Message.SEPARATOR);
-        // get the last tag-value and make sure it's the checksum
-        String checksumTagValue = rawMessage.substring(lastSeparator + 1);
-        // split it and check the value
-        String[] pair = checksumTagValue.split(TAGVALUE_SEPARATOR);
-        int value = Integer.parseInt(pair[1]);
-        if (value != calculateChecksum(rawMessage.substring(0, lastSeparator)))
-            throw new InvalidFixMessage("Invalid Checksum value");
-    }
-
-    /**
      * Verifies the body length of a full FIX message.
      * <br>
      * The message MUST contain the BodyLength, Checksum fields and,
@@ -97,39 +73,43 @@ class EngineUtils {
      *                   MUST be present.
      * @throws InvalidFixMessage If the body length doesn't match.
      */
-    static void verifyBodyLength(String rawMessage) throws InvalidFixMessage {
-        int lastSeparator = rawMessage.lastIndexOf(Message.SEPARATOR);
+    private static void verifyBodyLength(String rawMessage) throws InvalidFixMessage {
+        int lastSeparator = rawMessage.lastIndexOf(Message.TAG_SEP);
         rawMessage = rawMessage.substring(0, lastSeparator);
-        int firstSeparator = rawMessage.indexOf(Message.SEPARATOR);
+        int firstSeparator = rawMessage.indexOf(Message.TAG_SEP);
         String tagValue = rawMessage.substring(0, firstSeparator);
-        int value = Integer.parseInt(tagValue.split(TAGVALUE_SEPARATOR)[1]);
-        if (value != rawMessage.length() - tagValue.length())
+        int value = Integer.parseInt(tagValue.split(TAGVALUE_SEP)[1]);
+        if (value != rawMessage.length() - tagValue.length() - 1)
             throw new InvalidFixMessage("Invalid BodyLength value");
     }
 
-    static void setTag(Message message, Tag tag, String value) {
-        String setterName = "set" + StringUtils.capitalize(tag.field);
-        String getterName = "get" + StringUtils.capitalize(tag.field);
-
-        Method setter = getMethod(message.getClass(), setterName);
-        Method getter = getMethod(message.getClass(), getterName);
-
-        try {
-            if (getter.invoke(message) != null)
-                throw new InvalidFixMessage("Duplicated tag: " + tag);
-            setter.invoke(message, value);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            log.error("Cannot invoke getter or setter on {}", tag.field, e);
-            throw new InvalidFixMessage("Cannot invoke method " + setterName);
-        }
+    /**
+     * Verifies the checksum of a full FIX message.
+     * <br>
+     * The message MUST contain the Checksum field and MUST have at least another field.
+     *
+     * @param rawMessage The FIX message to check, the Checksum field MUST be present.
+     * @throws InvalidFixMessage If the checksum doesn't match.
+     */
+    private static void verifyChecksum(String rawMessage) throws InvalidFixMessage {
+        // search the last tag-value
+        int lastSeparator = rawMessage.lastIndexOf(Message.TAG_SEP);
+        // get the last tag-value and make sure it's the checksum
+        String checksumTagValue = rawMessage.substring(lastSeparator + 1);
+        // split it and check the value
+        String[] pair = checksumTagValue.split(TAGVALUE_SEP);
+        int value = Integer.parseInt(pair[1]);
+        if (value != calculateChecksum(rawMessage.substring(0, lastSeparator)))
+            throw new InvalidFixMessage("Invalid Checksum value");
     }
 
-    private static Method getMethod(Class<?> clazz, String name) {
-        return Arrays.stream(clazz.getMethods())
-                .filter(method -> method.getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> new InvalidFixMessage(
-                        "Cannot find method " + name + " in class " + clazz.getName()
-                ));
+    /**
+     * Sums all the bytes in a string and returns the modulus by 256.
+     */
+    private static Integer calculateChecksum(String str) {
+        int sum = 0;
+        for (Byte b : str.getBytes(StandardCharsets.UTF_8))
+            sum += b;
+        return sum % 256;
     }
 }

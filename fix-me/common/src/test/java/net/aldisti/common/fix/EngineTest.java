@@ -2,6 +2,7 @@ package net.aldisti.common.fix;
 
 import net.aldisti.common.fix.constants.Instruments;
 import net.aldisti.common.fix.constants.MsgType;
+import net.aldisti.common.fix.constants.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,28 +10,28 @@ import static org.junit.jupiter.api.Assertions.*;
 class EngineTest {
     @Test
     void integration() {
-        var msg = new Message();
-        msg.setType(MsgType.ORDER.value);
-        msg.setSenderId("220625");
-        msg.setTargetId("526022");
-        msg.setInstrument(Instruments.STOCK.name());
-        msg.setQuantity("360");
-        msg.setMarket("Something?");
-        msg.setPrice("30");
+        Message msg = new Message()
+                .add(Tag.TYPE, MsgType.ORDER.value)
+                .add(Tag.SENDER_ID, "220625")
+                .add(Tag.TARGET_ID, "526022")
+                .add(Tag.INSTRUMENT, Instruments.STOCK.name())
+                .add(Tag.QUANTITY, "360")
+                .add(Tag.MARKET, "Something?")
+                .add(Tag.PRICE, "30");
 
-        var serialized = Engine.serialize(msg);
+        String serialized = Engine.marshall(msg);
         assertNotNull(serialized);
 
-        var deserialized = Engine.deserialize(serialized);
+        Message deserialized = Engine.unmarshall(serialized);
         assertNotNull(deserialized);
 
-        assertEquals(msg.getType(), deserialized.getType());
-        assertEquals(msg.getSenderId(), deserialized.getSenderId());
-        assertEquals(msg.getTargetId(), deserialized.getTargetId());
-        assertEquals(msg.getInstrument(), deserialized.getInstrument());
-        assertEquals(msg.getQuantity(), deserialized.getQuantity());
-        assertEquals(msg.getMarket(), deserialized.getMarket());
-        assertEquals(msg.getPrice(), deserialized.getPrice());
-        assertEquals(msg.getMessageId(), deserialized.getMessageId());
+        assertEquals(msg.get(Tag.TYPE), deserialized.get(Tag.TYPE));
+        assertEquals(msg.get(Tag.SENDER_ID), deserialized.get(Tag.SENDER_ID));
+        assertEquals(msg.get(Tag.TARGET_ID), deserialized.get(Tag.TARGET_ID));
+        assertEquals(msg.get(Tag.INSTRUMENT), deserialized.get(Tag.INSTRUMENT));
+        assertEquals(msg.get(Tag.QUANTITY), deserialized.get(Tag.QUANTITY));
+        assertEquals(msg.get(Tag.MARKET), deserialized.get(Tag.MARKET));
+        assertEquals(msg.get(Tag.PRICE), deserialized.get(Tag.PRICE));
+        assertEquals(msg.get(Tag.MESSAGE_ID), deserialized.get(Tag.MESSAGE_ID));
     }
 }

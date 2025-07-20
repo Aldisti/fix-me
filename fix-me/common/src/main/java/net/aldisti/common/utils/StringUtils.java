@@ -87,4 +87,65 @@ public class StringUtils {
         }
         return a;
     }
+
+    /**
+     * Strips any of a set of characters from the start and end of a String.
+     * This is similar to {@link String#trim()} but allows the characters
+     * to be stripped to be controlled.
+     *
+     * <p>A {@code null} input String returns {@code null}.
+     * An empty string ("") input returns the empty string.</p>
+     *
+     * @param str  the String to remove characters from, may be null
+     * @param chars  the characters to remove, null treated as whitespace
+     * @return the stripped String, {@code null} if null String input
+     */
+    public static String strip(String str, String chars) {
+        return stripEnd(stripStart(str, chars), chars);
+    }
+
+    /**
+     * Strips any of a set of characters from the start of a String.
+     *
+     * <p>A {@code null} input String returns {@code null}.
+     * An empty string ("") input returns the empty string.</p>
+     *
+     * @param str  the String to remove characters from, may be null
+     * @param chars  the characters to remove, null treated as whitespace
+     * @return the stripped String, {@code null} if null String input
+     */
+    public static String stripStart(String str, String chars) {
+        if (isBlank(str) || isBlank(chars))
+            return str;
+
+        int start = 0;
+        while (start < str.length() && chars.indexOf(str.charAt(start)) != -1)
+            start++;
+
+        return str.substring(start);
+    }
+
+    /**
+     * Strips any of a set of characters from the end of a String.
+     *
+     * <p>A {@code null} input String returns {@code null}.
+     * An empty string ("") input returns the empty string.</p>
+     *
+     * <p>If the stripChars String is {@code null}, whitespace is
+     * stripped as defined by {@link Character#isWhitespace(char)}.</p>
+     *
+     * @param str  the String to remove characters from, may be null
+     * @param chars  the set of characters to remove, null treated as whitespace
+     * @return the stripped String, {@code null} if null String input
+     */
+    public static String stripEnd(String str, String chars) {
+        if (isBlank(str) || isBlank(chars))
+            return str;
+
+        int end = str.length() - 1;
+        while (end >= 0 && chars.indexOf(str.charAt(end)) != -1)
+            end--;
+
+        return str.substring(0, end + 1);
+    }
 }
