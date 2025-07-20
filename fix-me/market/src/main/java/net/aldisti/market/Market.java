@@ -5,7 +5,7 @@ import net.aldisti.common.fix.Message;
 import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
-import net.aldisti.market.db.DatabaseProvider;
+import net.aldisti.market.db.Database;
 import org.bson.Document;
 import org.slf4j.Logger;
 
@@ -80,7 +80,7 @@ public class Market {
             response = MessageBuilder.rejected(msg);
             transaction.put("response", MsgType.REJECTED.name());
         }
-        DatabaseProvider.save(transaction);
+        Database.save(transaction);
         client.send(response);
     }
 
@@ -94,7 +94,7 @@ public class Market {
             response = MessageBuilder.rejected(msg);
             transaction.put("response", MsgType.REJECTED.name());
         }
-        DatabaseProvider.save(transaction);
+        Database.save(transaction);
         client.send(response);
     }
 

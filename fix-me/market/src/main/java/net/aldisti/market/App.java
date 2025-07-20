@@ -2,6 +2,7 @@ package net.aldisti.market;
 
 import net.aldisti.common.network.Client;
 import net.aldisti.common.network.SharedQueueClient;
+import net.aldisti.market.db.Database;
 import sun.misc.Signal;
 
 public class App {
@@ -11,7 +12,10 @@ public class App {
         Client client = new SharedQueueClient("localhost", 5001, market.getQueue());
         Thread.ofVirtual().start(client);
 
-        Signal.handle(new Signal("INT"), (signal) -> market.stop());
+        Signal.handle(new Signal("INT"), (signal) -> {
+            market.stop();
+            Database.close();
+        });
 
         market.run(client);
     }

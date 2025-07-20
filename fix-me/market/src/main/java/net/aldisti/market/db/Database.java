@@ -5,21 +5,14 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import net.aldisti.common.fix.Message;
-import net.aldisti.common.fix.constants.Tag;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.print.Doc;
-import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-public class DatabaseProvider {
-    private static final Logger log = LoggerFactory.getLogger(DatabaseProvider.class);
+public class Database {
+    private static final Logger log = LoggerFactory.getLogger(Database.class);
 
     private static final MongoClient client;
     private static final String databaseName;
@@ -44,12 +37,16 @@ public class DatabaseProvider {
         log.info("Connected to {} (MongoDB)", databaseName);
     }
 
-    private DatabaseProvider() { }
+    private Database() { }
 
     public static void save(Document transaction) {
         client.getDatabase(databaseName)
                 .getCollection(collectionName)
                 .insertOne(transaction);
+    }
+
+    public static void close() {
+        client.close();
     }
 
     public static String getEnv(String name, String defaultValue) {
