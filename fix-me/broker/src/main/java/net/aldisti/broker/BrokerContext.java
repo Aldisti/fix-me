@@ -1,6 +1,5 @@
 package net.aldisti.broker;
 
-import lombok.Getter;
 import net.aldisti.broker.fix.MessageBuilder;
 import net.aldisti.common.fix.Message;
 import net.aldisti.common.fix.constants.Tag;
@@ -18,9 +17,7 @@ public class BrokerContext {
      * The key is {@code <marketId>|<assetId>}
      */
     private final Map<String, TradedAsset> assets;
-    @Getter
     private Integer balance;
-
 
     public BrokerContext() {
         assets = new HashMap<>();
@@ -69,5 +66,9 @@ public class BrokerContext {
 
     private static String getKey(final Message msg) {
         return msg.get(Tag.SENDER_ID) + "|" + msg.get(Tag.ASSET_ID);
+    }
+
+    public Integer getBalance() {
+        return this.balance;
     }
 }

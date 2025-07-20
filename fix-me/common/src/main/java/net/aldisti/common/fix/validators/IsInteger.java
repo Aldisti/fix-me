@@ -2,22 +2,22 @@ package net.aldisti.common.fix.validators;
 
 import java.util.regex.Pattern;
 
-public class IsIntegerValidator extends RegexValidator {
+public class IsInteger extends RegexValidator {
 
-    private IsIntegerValidator() {
+    private IsInteger() {
         super(Pattern.compile("^\\d+$"));
     }
 
-    private IsIntegerValidator(int size) {
+    private IsInteger(int size) {
         super(Pattern.compile("^\\d{" + size + "}$"));
     }
 
-    public static IsIntegerValidator of() {
-        return new IsIntegerValidator();
+    public static IsInteger of() {
+        return new IsInteger();
     }
 
-    public static IsIntegerValidator of(int size) {
-        return new IsIntegerValidator(size);
+    public static IsInteger of(int size) {
+        return new IsInteger(size);
     }
 
     @Override

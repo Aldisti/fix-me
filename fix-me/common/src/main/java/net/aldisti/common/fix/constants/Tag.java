@@ -1,22 +1,23 @@
 package net.aldisti.common.fix.constants;
 
 import net.aldisti.common.fix.InvalidFixMessage;
-import net.aldisti.common.fix.validators.IsIntegerValidator;
+import net.aldisti.common.fix.validators.IsInteger;
 import net.aldisti.common.fix.validators.IsEnum;
+import net.aldisti.common.fix.validators.IsMsgType;
 import net.aldisti.common.fix.validators.TagValueValidator;
 
 public enum Tag {
-    BODY_LENGTH(9, IsIntegerValidator.of()),
-    TYPE(11),
-    SENDER_ID(13, IsIntegerValidator.of(6)),
-    TARGET_ID(15, IsIntegerValidator.of(6)),
+    BODY_LENGTH(9, IsInteger.of()),
+    TYPE(11, IsMsgType.of()),
+    SENDER_ID(13, IsInteger.of(6)),
+    TARGET_ID(15, IsInteger.of(6)),
     MESSAGE_ID(17),
     INSTRUMENT(19, IsEnum.of(Instruments.class)),
     ASSET_ID(20),
-    QUANTITY(21, IsIntegerValidator.of()),
+    QUANTITY(21, IsInteger.of()),
     MARKET(23),
-    PRICE(25, IsIntegerValidator.of()),
-    CHECKSUM(10, IsIntegerValidator.of(3));
+    PRICE(25, IsInteger.of()),
+    CHECKSUM(10, IsInteger.of(3));
 
     private final int value;
     private final TagValueValidator validator;

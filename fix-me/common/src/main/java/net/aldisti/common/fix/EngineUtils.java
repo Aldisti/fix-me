@@ -1,6 +1,5 @@
 package net.aldisti.common.fix;
 
-import lombok.extern.slf4j.Slf4j;
 import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.utils.StringUtils;
 
@@ -10,7 +9,6 @@ import java.util.Map;
 import static net.aldisti.common.fix.Message.TAGVALUE_SEP;
 import static net.aldisti.common.fix.Message.TAG_SEP;
 
-@Slf4j
 class EngineUtils {
     private EngineUtils() {}
 
@@ -22,18 +20,26 @@ class EngineUtils {
             + TAGVALUE_SEP + "\\d+)" + TAG_SEP + "(.+)" + TAG_SEP
             + "(" + Tag.CHECKSUM.value() + TAGVALUE_SEP + "\\d{3})$";
 
-
+    /**
+     * Adds the body length tag-value to the beginning of a message.
+     */
     static String addBodyLength(String body) {
         return Tag.BODY_LENGTH.value() + TAGVALUE_SEP + body.length() + TAG_SEP + body;
     }
 
+    /**
+     * Calculates and adds the checksum tag-value to the end of a message.
+     */
     static String addChecksum(String body) {
         String checksum = StringUtils.leftPad(calculateChecksum(body).toString(), 3, '0');
         return body + TAG_SEP + Tag.CHECKSUM.value()
                 + TAGVALUE_SEP + checksum;
     }
 
-    static Map.Entry<Tag, String> extractTagValue(String tagValue) {
+    /**
+     * Extracts a pair of {@link Tag}-{@code String} from a tag-value representation.
+     */
+    static Map.Entry<Tag, String> extractTagValue(String tagValue) throws InvalidFixMessage {
         String[] parts = StringUtils.strip(tagValue, TAG_SEP).split(TAGVALUE_SEP, 2);
         if (parts.length != 2)
             throw new InvalidFixMessage("Invalid tag value, found " + parts.length + " parts");
@@ -97,9 +103,12 @@ class EngineUtils {
             throw new InvalidFixMessage("Invalid Checksum value");
     }
 
-    private static Integer calculateChecksum(String rawMessage) {
+    /**
+     * Sums all the bytes in a string and returns the modulus by 256.
+     */
+    private static Integer calculateChecksum(String str) {
         int sum = 0;
-        for (Byte b : rawMessage.getBytes(StandardCharsets.UTF_8))
+        for (Byte b : str.getBytes(StandardCharsets.UTF_8))
             sum += b;
         return sum % 256;
     }

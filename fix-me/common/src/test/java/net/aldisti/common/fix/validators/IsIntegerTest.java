@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class IsIntegerValidatorTest {
+class IsIntegerTest {
     @Test
     void testValidNoArgument() {
-        final IsIntegerValidator validator = IsIntegerValidator.of();
+        final IsInteger validator = IsInteger.of();
 
         assertDoesNotThrow(() -> validator.validate("1"));
         assertDoesNotThrow(() -> validator.validate("123"));
@@ -23,7 +23,7 @@ class IsIntegerValidatorTest {
 
     @Test
     void testValidWithArgument() {
-        final IsIntegerValidator validator = IsIntegerValidator.of(3);
+        final IsInteger validator = IsInteger.of(3);
 
         assertDoesNotThrow(() -> validator.validate("012"));
         assertDoesNotThrow(() -> validator.validate("123"));

@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * All the setters of this class perform validation checks.
- */
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -41,11 +38,6 @@ public class Message {
 
     public Message add(Tag tag, String value) {
         attributes.put(tag, value);
-        return this;
-    }
-
-    public Message remove(Tag tag) {
-        attributes.remove(tag);
         return this;
     }
 
@@ -87,7 +79,7 @@ public class Message {
                 if (entry.getKey().validator() != null)
                     entry.getKey().validator().validate(entry.getValue());
         } catch (ValidatorException ve) {
-            log.info(ve.getMessage());
+            log.warn("Invalid message: {}", ve.getMessage());
             return true;
         }
         return false;
