@@ -73,6 +73,10 @@ public class Message {
         return Instruments.valueOf(attr);
     }
 
+    public final Map<Tag, String> getAttributes() {
+        return attributes;
+    }
+
     public boolean isNotValid() {
         try {
             for (Map.Entry<Tag, String> entry : attributes.entrySet())

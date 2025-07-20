@@ -42,10 +42,11 @@ main() {
 
 # 1: type <broker|market|router>
 __execute() {
-	local exe="./fix-me/$1/target/$1-1.0.0-jar-with-dependencies.jar"
+	local project_dir="$PWD/$(dirname $0)/fix-me"
+	local exe="$project_dir/$1/target/$1-1.0.0-jar-with-dependencies.jar"
 	if ! [ -f $exe ]; then
 		__debug "Compiling code..."
-		cd fix-me
+		cd $project_dir
 		mvn -q clean package
 		cd ..
 	fi

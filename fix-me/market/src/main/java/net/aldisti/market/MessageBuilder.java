@@ -18,17 +18,20 @@ public class MessageBuilder {
     }
 
     public static Message executed(Message msg) {
-        return msg.add(Tag.TYPE, MsgType.EXECUTED.value)
+        return msg
+                .add(Tag.TYPE, MsgType.EXECUTED.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID));
     }
 
     public static Message rejected(Message msg) {
-        return msg.add(Tag.TYPE, MsgType.REJECTED.value)
+        return msg
+                .add(Tag.TYPE, MsgType.REJECTED.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID));
     }
 
     public static Message error(Message msg) {
-        return msg.add(Tag.TYPE, MsgType.ERROR.value)
+        return msg
+                .add(Tag.TYPE, MsgType.ERROR.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID));
     }
 }

@@ -2,10 +2,14 @@ package net.aldisti.market;
 
 import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
+import net.aldisti.market.db.DatabaseProvider;
+import org.bson.Document;
 import org.slf4j.Logger;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Market {
@@ -67,21 +71,48 @@ public class Market {
     }
 
     private void buy(Message msg) {
-        if (context.buyAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE)))
-            client.send(MessageBuilder.executed(msg));
-        else
-            client.send(MessageBuilder.rejected(msg));
+        Message response;
+        Document transaction = createTransaction(msg);
+        if (context.buyAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
+            response = MessageBuilder.executed(msg);
+            transaction.put("response", MsgType.EXECUTED.name());
+        } else {
+            response = MessageBuilder.rejected(msg);
+            transaction.put("response", MsgType.REJECTED.name());
+        }
+        DatabaseProvider.save(transaction);
+        client.send(response);
     }
 
     private void sell(Message msg) {
-        if (context.sellAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE)))
-            client.send(MessageBuilder.executed(msg));
-        else
-            client.send(MessageBuilder.rejected(msg));
+        Message response;
+        Document transaction = createTransaction(msg);
+        if (context.sellAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
+            response = MessageBuilder.executed(msg);
+            transaction.put("response", MsgType.EXECUTED.name());
+        } else {
+            response = MessageBuilder.rejected(msg);
+            transaction.put("response", MsgType.REJECTED.name());
+        }
+        DatabaseProvider.save(transaction);
+        client.send(response);
     }
 
     private void error(Message msg) {
         client.send(MessageBuilder.error(msg));
+    }
+
+    private static Document createTransaction(Message msg) {
+        Document t = new Document();
+        t.put("message_id", msg.get(Tag.MESSAGE_ID));
+        t.put("client_id", msg.get(Tag.TARGET_ID));
+        t.put("asset_id", msg.get(Tag.ASSET_ID));
+        t.put("time", LocalDateTime.now());
+        t.put("type", msg.type().name());
+        t.put("price", msg.get(Tag.PRICE));
+        t.put("quantity", msg.get(Tag.QUANTITY));
+        t.put("instrument", msg.get(Tag.INSTRUMENT));
+        return t;
     }
 
     public ConcurrentLinkedQueue<Message> getQueue() {
