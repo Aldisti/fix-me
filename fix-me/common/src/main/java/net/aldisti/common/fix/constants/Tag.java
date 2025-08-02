@@ -1,8 +1,8 @@
 package net.aldisti.common.fix.constants;
 
 import net.aldisti.common.fix.InvalidFixMessage;
-import net.aldisti.common.fix.validators.IsInteger;
 import net.aldisti.common.fix.validators.IsEnum;
+import net.aldisti.common.fix.validators.IsInteger;
 import net.aldisti.common.fix.validators.IsMsgType;
 import net.aldisti.common.fix.validators.TagValueValidator;
 

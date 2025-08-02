@@ -3,7 +3,10 @@ package net.aldisti.market;
 import net.aldisti.common.finance.Asset;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 public class MarketContext {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(MarketContext.class);

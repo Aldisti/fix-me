@@ -6,9 +6,7 @@ public class IdProvider {
     private IdProvider() {}
 
     public static Integer next() {
-        int id = IdProvider.id;
-        IdProvider.id++;
-        return id;
+        return id++;
     }
 
     public static Integer peek() {

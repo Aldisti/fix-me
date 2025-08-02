@@ -6,7 +6,6 @@ import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
 import org.slf4j.Logger;
 
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Market {

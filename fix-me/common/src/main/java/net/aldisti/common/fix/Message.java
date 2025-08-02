@@ -1,7 +1,12 @@
 package net.aldisti.common.fix;
 
-import lombok.*;
-import net.aldisti.common.fix.constants.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import net.aldisti.common.fix.constants.Instrument;
+import net.aldisti.common.fix.constants.MsgType;
+import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.fix.validators.ValidatorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
