@@ -4,7 +4,7 @@ import net.aldisti.common.finance.Asset;
 
 import java.util.List;
 
-import static net.aldisti.common.fix.constants.Instruments.*;
+import static net.aldisti.common.fix.constants.Instrument.*;
 
 public class StartingAssets {
     public static final List<Asset> ASSETS = List.of(

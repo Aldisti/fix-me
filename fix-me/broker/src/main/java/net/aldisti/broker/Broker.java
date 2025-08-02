@@ -1,6 +1,6 @@
 package net.aldisti.broker;
 
-import net.aldisti.broker.fix.MessageBuilder;
+import net.aldisti.broker.context.SimpleBrokerContext;
 import net.aldisti.common.fix.Message;
 import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
@@ -25,14 +25,15 @@ public class Broker {
     /**
      * The broker context, where all the assets are managed.
      */
-    private final BrokerContext context;
+    private final SimpleBrokerContext context;
+
     private Client client;
     private boolean status;
 
     public Broker() {
         this.queue = new ArrayBlockingQueue<>(1024);
         this.pending = new HashMap<>();
-        this.context = new BrokerContext();
+        this.context = new SimpleBrokerContext();
         this.status = true;
     }
 
@@ -47,12 +48,14 @@ public class Broker {
         } finally {
             log.info("Shutting down");
             client.close();
-            int balance = context.getBalance();
-            System.out.printf("\nInitial balance: %s\nFinal balance: %s\n", BrokerContext.INITIAL_BALANCE, context.getNetWorth());
+            System.out.printf("\nInitial balance: %s\nFinal balance: %s\n",
+                    SimpleBrokerContext.INITIAL_BALANCE, context.getNetWorth());
         }
     }
 
     public void stop() {
+        if (!status) // do not call this method twice
+            return;
         status = false;
         if (!queue.offer(new Message())) {
             log.error("Broker queue is full, cannot add empty message");
@@ -84,8 +87,8 @@ public class Broker {
         }
 
         switch (order.type()) {
-            case BUY -> context.buy(msg);
-            case SELL -> context.sell(msg);
+            case BUY -> context.executeBuy(msg);
+            case SELL -> context.executeSell(msg);
             default -> {
                 log.error("Executed order refers to invalid message type: {}", order.type());
             }
@@ -103,7 +106,7 @@ public class Broker {
             log.error("Non-existent order with id: {} has been rejected", msg.get(Tag.MESSAGE_ID));
             return;
         }
-        context.restoreRejected(order);
+        context.restoreOrder(order);
         log.warn("Order {} has been rejected: {}", msg.get(Tag.MESSAGE_ID), order);
     }
 
@@ -114,21 +117,8 @@ public class Broker {
      * Here happens most of the buy/sell logic.
      */
     private void notify(Message msg) {
-        final TradedAsset asset = context.addOrUpdate(msg);
-
-        if (asset.getQuantity() == 0) {
-            // check current asset allocation before buying
-            send(context.buyOrder(asset, 10));
-            return;
-        }
-
-        int ror = asset.rateOfReturn();
-        if (ror >= 5 && asset.getQuantity() / 4 > 0) {
-            send(MessageBuilder.sell(asset, asset.getQuantity() / 4, asset.getPrice()));
-        } else if (ror <= -5) {
-            int quantity = (asset.getQuantity() / 4 > 0) ? asset.getQuantity() / 4 : 10;
-            send(context.buyOrder(asset, quantity));
-        }
+        final TradedAsset asset = context.updateAsset(msg);
+        send(context.checkForBuy(asset));
     }
 
     /**

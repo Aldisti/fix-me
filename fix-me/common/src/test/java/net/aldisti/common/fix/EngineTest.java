@@ -1,11 +1,12 @@
 package net.aldisti.common.fix;
 
-import net.aldisti.common.fix.constants.Instruments;
+import net.aldisti.common.fix.constants.Instrument;
 import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.fix.constants.Tag;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class EngineTest {
     @Test
@@ -14,7 +15,7 @@ class EngineTest {
                 .add(Tag.TYPE, MsgType.ORDER.value)
                 .add(Tag.SENDER_ID, "220625")
                 .add(Tag.TARGET_ID, "526022")
-                .add(Tag.INSTRUMENT, Instruments.STOCK.name())
+                .add(Tag.INSTRUMENT, Instrument.STOCK.name())
                 .add(Tag.QUANTITY, "360")
                 .add(Tag.MARKET, "Something?")
                 .add(Tag.PRICE, "30");

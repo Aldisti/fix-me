@@ -21,19 +21,24 @@ public class Market {
      * Interval in milliseconds between each market update.
      */
     private final int interval;
+    private final MessageBuilder builder;
+
     private Client client;
     private boolean status = true;
 
     public Market() {
-        this.queue = new ConcurrentLinkedQueue<>();
-        this.context = MarketContext.getInstance();
-        this.interval = 35;
+        this("Default", 35);
     }
 
-    public Market(Integer interval) {
+    public Market(int interval) {
+        this("Default", interval);
+    }
+
+    public Market(String name, int interval) {
         this.queue = new ConcurrentLinkedQueue<>();
         this.context = MarketContext.getInstance();
         this.interval = interval;
+        this.builder = new MessageBuilder(name);
     }
 
     public void run(Client client) {
@@ -48,7 +53,7 @@ public class Market {
             context.getAssetIds().forEach(id -> {
                 Asset asset = context.updateAsset(id);
                 if (asset.getPrice() != 0)
-                    client.send(MessageBuilder.notifyUpdate(asset));
+                    client.send(builder.notifyUpdate(asset));
             });
             time = System.currentTimeMillis();
         }
@@ -99,7 +104,7 @@ public class Market {
     }
 
     private void error(Message msg) {
-        client.send(MessageBuilder.error(msg));
+        client.send(builder.error(msg));
     }
 
     private static Document createTransaction(Message msg) {

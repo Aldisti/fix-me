@@ -27,8 +27,8 @@ public class MessageBuilder {
     private static Message newFromAsset(final TradedAsset asset) {
         return new Message()
                 .add(Tag.TARGET_ID, asset.getMarketId())
-                .add(Tag.ASSET_ID, asset.getAsset().getId())
-                .add(Tag.INSTRUMENT, asset.getAsset().getInstrument().name())
+                .add(Tag.ASSET_ID, asset.getId())
+                .add(Tag.INSTRUMENT, asset.getInstrument().name())
                 .add(Tag.MESSAGE_ID, UUID.randomUUID().toString());
     }
 }
