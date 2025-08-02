@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>net.aldisti</groupId>
 		<artifactId>fix-me</artifactId>
-		<version>1.0.0</version>
+		<version>1.1.0</version>
 	</parent>
 
 	<artifactId>router</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>router</name>
 	<description>Router component of the 42 fix-me project</description>
 
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>net.aldisti</groupId>
             <artifactId>common</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>

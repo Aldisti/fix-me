@@ -6,6 +6,8 @@ GREEN="\033[32;1m"
 RED="\033[31;1m"
 CYAN="\033[36;1m"
 
+VERSION="1.1.0"
+
 DEBUG="false"
 QUIET="false"
 
@@ -55,7 +57,7 @@ main() {
 # 1: type <broker|market|router>
 __execute() {
 	local project_dir="$ROOT_DIR/fix-me"
-	local exe="$project_dir/$1/target/$1-1.0.0-jar-with-dependencies.jar"
+	local exe="$project_dir/$1/target/$1-$VERSION-jar-with-dependencies.jar"
 	if ! [ -f $exe ]; then
 		__debug "Compiling code..."
 		cd $project_dir

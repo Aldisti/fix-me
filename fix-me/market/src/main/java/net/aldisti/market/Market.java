@@ -79,10 +79,10 @@ public class Market {
         Message response;
         Document transaction = createTransaction(msg);
         if (context.buyAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
-            response = MessageBuilder.executed(msg);
+            response = builder.executed(msg);
             transaction.put("response", MsgType.EXECUTED.name());
         } else {
-            response = MessageBuilder.rejected(msg);
+            response = builder.rejected(msg);
             transaction.put("response", MsgType.REJECTED.name());
         }
         Database.save(transaction);
@@ -93,10 +93,10 @@ public class Market {
         Message response;
         Document transaction = createTransaction(msg);
         if (context.sellAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
-            response = MessageBuilder.executed(msg);
+            response = builder.executed(msg);
             transaction.put("response", MsgType.EXECUTED.name());
         } else {
-            response = MessageBuilder.rejected(msg);
+            response = builder.rejected(msg);
             transaction.put("response", MsgType.REJECTED.name());
         }
         Database.save(transaction);
