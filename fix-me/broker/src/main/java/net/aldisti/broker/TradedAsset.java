@@ -1,45 +1,38 @@
 package net.aldisti.broker;
 
 import lombok.Getter;
-import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.Instruments;
 import net.aldisti.common.fix.constants.Tag;
 
 @Getter
 public class TradedAsset {
-    private final Asset asset;
-    private final String marketId;
-    /**
-     * The bought quantity.
-     */
-    private Integer quantity;
-    /**
-     * The amount paid for the {@link #quantity}
-     */
-    private Integer paid;
-    /**
-     * The market price value.
-     */
-    private Integer price;
+    private final String id;
+    private final Instruments instrument;
+    private final String marketName; // The market name, unique for the market.
+
+    private String marketId; // The market id, assigned by the router.
+    private Integer price; // The market price value.
+    private Integer quantity; // The bought quantity.
+    private Integer paid; // The amount paid for the quantity.
 
     public TradedAsset(Message msg) {
-        this.asset = Asset.builder()
-                .id(msg.get(Tag.ASSET_ID))
-                .name("N/A")
-                .instrument(msg.instrument())
-                .build();
+        this.id = msg.get(Tag.ASSET_ID);
+        this.instrument = msg.instrument();
+        this.price = msg.getInt(Tag.PRICE);
         this.marketId = msg.get(Tag.SENDER_ID);
+        this.marketName = msg.get(Tag.MARKET);
         this.paid = 0;
         this.quantity = 0;
-        this.price = msg.getInt(Tag.PRICE);
     }
 
     /**
-     * @param price Updates the asset current price.
-     * @return the updated instance of the asset.
+     * @param msg The message containing new data about the asset.
+     * @return The updated asset.
      */
-    public TradedAsset update(Integer price) {
-        this.price = price;
+    public TradedAsset update(Message msg) {
+        this.price = msg.getInt(Tag.PRICE);
+        this.marketId = msg.get(Tag.SENDER_ID);
         return this;
     }
 
@@ -50,7 +43,7 @@ public class TradedAsset {
      */
     public void add(Integer quantity, Integer price) {
         this.quantity += quantity;
-        this.paid += price;
+        this.paid += price * quantity;
         this.price = price; // this should be the latest price
     }
 

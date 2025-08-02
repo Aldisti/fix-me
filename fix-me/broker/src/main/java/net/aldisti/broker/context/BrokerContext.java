@@ -68,7 +68,7 @@ public abstract class BrokerContext {
      */
     public TradedAsset updateAsset(final Message msg) {
         return assets.compute(getKey(msg), (k, v) ->
-                (v == null) ? new TradedAsset(msg) : v.update(msg.getInt(Tag.PRICE)));
+                (v == null) ? new TradedAsset(msg) : v.update(msg));
     }
 
     /**
@@ -81,6 +81,6 @@ public abstract class BrokerContext {
     }
 
     static String getKey(final Message msg) {
-        return msg.get(Tag.SENDER_ID) + "|" + msg.get(Tag.ASSET_ID);
+        return msg.get(Tag.MARKET) + "|" + msg.get(Tag.ASSET_ID);
     }
 }
