@@ -2,11 +2,12 @@ package net.aldisti.market;
 
 import net.aldisti.common.finance.Asset;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 public class MarketContext {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(MarketContext.class);
+    private static final Logger log = LoggerFactory.getLogger(MarketContext.class);
     private static final Random RANDOM = new Random();
 
     private static final MarketContext INSTANCE = new MarketContext();
@@ -47,7 +48,6 @@ public class MarketContext {
         log.info("Broker sold {} of {} for {}", quantity, id, price);
         // increase the quantity
         asset.setQuantity(asset.getQuantity() + quantity);
-        // TODO: don't know if I need to update the price or not
         return true;
     }
 
