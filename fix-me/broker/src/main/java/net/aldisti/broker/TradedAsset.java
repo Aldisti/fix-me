@@ -9,8 +9,9 @@ import net.aldisti.common.fix.constants.Tag;
 public class TradedAsset {
     private final String id;
     private final Instruments instrument;
-    private final String marketName;
-    private String marketId;
+    private final String marketName; // The market name, unique for the market.
+
+    private String marketId; // The market id, assigned by the router.
     private Integer price; // The market price value.
     private Integer quantity; // The bought quantity.
     private Integer paid; // The amount paid for the quantity.
@@ -26,16 +27,12 @@ public class TradedAsset {
     }
 
     /**
-     * @param price Updates the asset current price.
-     * @return the updated instance of the asset.
+     * @param msg The message containing new data about the asset.
+     * @return The updated asset.
      */
-    public TradedAsset update(Integer price) {
-        this.price = price;
-        return this;
-    }
-
-    public TradedAsset update(String marketId) {
-        this.marketId = marketId;
+    public TradedAsset update(Message msg) {
+        this.price = msg.getInt(Tag.PRICE);
+        this.marketId = msg.get(Tag.SENDER_ID);
         return this;
     }
 
