@@ -1,6 +1,6 @@
 package net.aldisti.common.fix.constants;
 
-public enum Instruments {
+public enum Instrument {
     STOCK(0.6f),
     ETF(0.4f),
     BOND(0.15f),
@@ -8,7 +8,7 @@ public enum Instruments {
 
     public final float volatility;
 
-    Instruments(float volatility) {
+    Instrument(float volatility) {
         this.volatility = volatility;
     }
 }

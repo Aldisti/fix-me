@@ -66,11 +66,11 @@ public class Message {
         return MsgType.fromValue(attr);
     }
 
-    public Instruments instrument() {
+    public Instrument instrument() {
         String attr = attributes.get(Tag.INSTRUMENT);
         if (attr == null)
             return null;
-        return Instruments.valueOf(attr);
+        return Instrument.valueOf(attr);
     }
 
     public boolean isNotValid() {

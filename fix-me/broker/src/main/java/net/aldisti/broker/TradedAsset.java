@@ -2,13 +2,13 @@ package net.aldisti.broker;
 
 import lombok.Getter;
 import net.aldisti.common.fix.Message;
-import net.aldisti.common.fix.constants.Instruments;
+import net.aldisti.common.fix.constants.Instrument;
 import net.aldisti.common.fix.constants.Tag;
 
 @Getter
 public class TradedAsset {
     private final String id;
-    private final Instruments instrument;
+    private final Instrument instrument;
     private final String marketName; // The market name, unique for the market.
 
     private String marketId; // The market id, assigned by the router.

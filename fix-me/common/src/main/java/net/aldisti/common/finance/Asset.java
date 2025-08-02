@@ -1,7 +1,7 @@
 package net.aldisti.common.finance;
 
 import lombok.*;
-import net.aldisti.common.fix.constants.Instruments;
+import net.aldisti.common.fix.constants.Instrument;
 
 @Getter
 @Setter
@@ -12,7 +12,7 @@ import net.aldisti.common.fix.constants.Instruments;
 public class Asset {
     private String id;
     private String name;
-    private Instruments instrument;
+    private Instrument instrument;
     private Integer quantity;
     private Integer price;
 }
