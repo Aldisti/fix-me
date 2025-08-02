@@ -18,7 +18,7 @@ communicate with each other.
 
 # Installation
 
-1. Before anything else, setup the database following this [guide][mongo/README.md]
+1. Before anything else, setup the database following this [guide](mongo/README.md)
 
 2. To start up the other components, you can use the marvelous utility `run.sh`.
 
