@@ -1,12 +1,10 @@
-package net.aldisti.broker;
+package net.aldisti.broker.context;
 
+import net.aldisti.broker.TradedAsset;
 import net.aldisti.broker.fix.MessageBuilder;
 import net.aldisti.common.fix.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class SimpleBrokerContext extends BrokerContext {
     private static final Logger log = LoggerFactory.getLogger(SimpleBrokerContext.class);
