@@ -53,7 +53,9 @@ public class TradedAsset {
      * @return the updated instance of the asset.
      */
     public void subtract(Integer quantity, Integer price) {
-        add(-quantity, -price);
+        this.quantity -= quantity;
+        this.paid -= price * quantity;
+        this.price = price;
     }
 
     /**
