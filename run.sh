@@ -9,6 +9,8 @@ CYAN="\033[36;1m"
 DEBUG="false"
 QUIET="false"
 
+ROOT_DIR="$PWD/$(dirname $0)"
+
 main() {
 	while [ $# -gt 0 ]; do
 		opt="$(echo $1 | tr 'A-Z' 'a-z')"
@@ -24,6 +26,16 @@ main() {
 			;;
 			router)
 				__router
+				return $?
+			;;
+			mongo|database)
+				local cmd="$1"
+				if [ "$cmd" = "" ]; then
+					local cmd="up"
+				else
+					shift
+				fi
+				__database $cmd
 				return $?
 			;;
 			-q | --quiet)
@@ -42,7 +54,7 @@ main() {
 
 # 1: type <broker|market|router>
 __execute() {
-	local project_dir="$PWD/$(dirname $0)/fix-me"
+	local project_dir="$ROOT_DIR/fix-me"
 	local exe="$project_dir/$1/target/$1-1.0.0-jar-with-dependencies.jar"
 	if ! [ -f $exe ]; then
 		__debug "Compiling code..."
@@ -60,6 +72,8 @@ __broker() {
 }
 
 __market() {
+	check_env
+	export $(cat $ROOT_DIR/.env | tr '\n' ' ')
 	__execute "market"
 }
 
@@ -67,6 +81,33 @@ __router() {
 	__execute "router"
 }
 
+
+__check_env() {
+	local env_file="$ROOT_DIR/.env"
+	if [ ! -f "$env_file" ]; then
+		$ROOT_DIR/mongo/gen_env.sh "$env_file"
+	fi
+}
+
+__database() {
+	local env_file="$ROOT_DIR/.env"
+	local compose="$ROOT_DIR/mongo/docker-compose.yml"
+
+	case "$1" in
+		up)
+			__check_env
+			docker compose -f "$compose" --env-file "$env_file" up -d
+		;;
+		down)
+			docker compose -f "$compose" down
+		;;
+		clean)
+			docker rm -f fix-me-mongo
+			docker volume rm fix-me-mongo
+			rm "$env_file"
+		;;
+	esac
+}
 
 
 # 1: type
