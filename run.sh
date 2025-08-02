@@ -72,7 +72,7 @@ __broker() {
 }
 
 __market() {
-	check_env
+	__check_env
 	export $(cat $ROOT_DIR/.env | tr '\n' ' ')
 	__execute "market"
 }
@@ -105,6 +105,9 @@ __database() {
 			docker rm -f fix-me-mongo
 			docker volume rm fix-me-mongo
 			rm "$env_file"
+		;;
+		*)
+			__error "Invalid command '$1' for mongoDB"
 		;;
 	esac
 }
