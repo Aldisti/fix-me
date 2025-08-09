@@ -1,6 +1,7 @@
 package net.aldisti.broker;
 
 import net.aldisti.common.network.Client;
+import net.aldisti.common.network.InvalidClientConnection;
 import net.aldisti.common.network.SharedQueueClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,13 @@ public class App {
     public static void main(String[] args) {
         Broker broker = new Broker();
 
-        Client client = new SharedQueueClient("127.0.0.1", 5000, broker.getQueue());
+        Client client;
+        try {
+            client = new SharedQueueClient("127.0.0.1", 5000, broker.getQueue());
+        } catch (InvalidClientConnection e) {
+            log.error("Client cannot connect", e);
+            return;
+        }
         Thread.ofVirtual().start(client);
 
         Signal.handle(new Signal("INT"), (signal) -> broker.stop());

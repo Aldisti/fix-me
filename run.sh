@@ -18,19 +18,19 @@ main() {
 		opt="$(echo $1 | tr 'A-Z' 'a-z')"
 		shift
 		case ${opt} in
-			broker)
+			broker | b)
 				__broker
 				return $?
 			;;
-			market)
+			market | m)
 				__market $@
 				return $?
 			;;
-			router)
+			router | r)
 				__router
 				return $?
 			;;
-			mongo|database)
+			mongo | database | db)
 				local cmd="$1"
 				if [ "$cmd" = "" ]; then
 					local cmd="up"
