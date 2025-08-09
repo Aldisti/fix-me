@@ -23,7 +23,7 @@ main() {
 				return $?
 			;;
 			market)
-				__market
+				__market $@
 				return $?
 			;;
 			router)
@@ -64,9 +64,9 @@ __execute() {
 		mvn -q clean package
 		cd ..
 	fi
-
-	__debug "Starting application..."
-	java -jar $exe
+	shift # removes the 'market' params so that '$@' expands to only the required params
+	__debug "Starting application with params: $@"
+	java -jar $exe $@
 }
 
 __broker() {
@@ -76,7 +76,7 @@ __broker() {
 __market() {
 	__check_env
 	export $(cat $ROOT_DIR/.env | tr '\n' ' ')
-	__execute "market"
+	__execute "market" $@
 }
 
 __router() {
