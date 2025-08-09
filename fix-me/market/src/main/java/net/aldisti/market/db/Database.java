@@ -1,9 +1,7 @@
 package net.aldisti.market.db;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoSecurityException;
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -37,13 +35,7 @@ public class Database {
                 username, password, host, databaseName
         );
 
-        MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(connectionUrl))
-                .credential(MongoCredential.createCredential(username, databaseName, password.toCharArray()))
-                .build();
-
-        client = MongoClients.create(settings);
-        checkConnection(); // exits in case of error
+        checkConnection(new ConnectionString(connectionUrl)); // exits in case of error
     }
 
     public static void save(Document transaction) {
@@ -60,14 +52,16 @@ public class Database {
         return Optional.ofNullable(System.getenv(name)).orElse(defaultValue);
     }
 
-    private static void checkConnection() {
+    private static void checkConnection(ConnectionString settings) {
         Bson command = new BsonDocument("ping", new BsonInt64(1));
         try {
+            log.info("Connecting to database {}", databaseName);
+            client = MongoClients.create(settings);
             MongoDatabase database = client.getDatabase(databaseName);
             database.runCommand(command);
             log.info("Successfully connected to {} (MongoDB)", databaseName);
-        } catch (MongoSecurityException e) {
-            log.error("Cannot connect to database {}", databaseName, e);
+        } catch (MongoException e) {
+            log.error("Cannot connect to database {}", databaseName);
             close();
             System.exit(42);
         }
