@@ -2,6 +2,7 @@ package net.aldisti.broker.context;
 
 import net.aldisti.broker.TradedAsset;
 import net.aldisti.common.fix.Message;
+import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.fix.constants.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +57,8 @@ public abstract class BrokerContext {
      * Restore context after rejected order.
      */
     public void restoreOrder(final Message msg) {
-        switch (msg.type()) {
-            case BUY -> balance += msg.getInt(Tag.QUANTITY) * msg.getInt(Tag.PRICE);
-            case SELL -> balance -= msg.getInt(Tag.QUANTITY) * msg.getInt(Tag.PRICE);
+        if (msg.type() == MsgType.BUY) {
+            balance += msg.getInt(Tag.QUANTITY) * msg.getInt(Tag.PRICE);
         }
         log.warn("Rejected order restored");
     }
