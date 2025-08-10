@@ -17,13 +17,16 @@ import java.util.Optional;
 public class Database {
     private static final Logger log = LoggerFactory.getLogger(Database.class);
 
-    private static MongoClient client;
+    private static MongoClient client = null;
     private static String databaseName;
     private static String collectionName;
 
     private Database() { }
 
     public static void create() {
+        if (client != null)
+            return; // instantiate just one time
+
         String host = getEnv("DB_HOST", "localhost:27017");
         String username = getEnv("DB_USERNAME", "");
         String password = getEnv("DB_PASSWORD", "");
@@ -31,11 +34,10 @@ public class Database {
         collectionName = getEnv("DB_COLLECTION", "transactions");
 
         String connectionUrl = String.format(
-                "mongodb://%s:%s@%s/%s",
-                username, password, host, databaseName
+                "mongodb://%s:%s@%s/%s", username, password, host, databaseName
         );
 
-        checkConnection(new ConnectionString(connectionUrl)); // exits in case of error
+        createConnection(new ConnectionString(connectionUrl));
     }
 
     public static void save(Document transaction) {
@@ -45,18 +47,21 @@ public class Database {
     }
 
     public static void close() {
-        client.close();
+        if (client != null) {
+            client.close();
+            client = null;
+        }
     }
 
     public static String getEnv(String name, String defaultValue) {
         return Optional.ofNullable(System.getenv(name)).orElse(defaultValue);
     }
 
-    private static void checkConnection(ConnectionString settings) {
+    private static void createConnection(ConnectionString uri) {
         Bson command = new BsonDocument("ping", new BsonInt64(1));
         try {
             log.info("Connecting to database {}", databaseName);
-            client = MongoClients.create(settings);
+            client = MongoClients.create(uri);
             MongoDatabase database = client.getDatabase(databaseName);
             database.runCommand(command);
             log.info("Successfully connected to {} (MongoDB)", databaseName);
