@@ -2,14 +2,12 @@ package net.aldisti.market;
 
 import net.aldisti.common.finance.Asset;
 import net.aldisti.common.fix.Message;
-import net.aldisti.common.fix.constants.MsgType;
-import net.aldisti.common.fix.constants.Tag;
 import net.aldisti.common.network.Client;
-import net.aldisti.market.db.Database;
-import org.bson.Document;
+import net.aldisti.market.chain.BasicHandler;
+import net.aldisti.market.chain.Request;
+import net.aldisti.market.chain.Response;
 import org.slf4j.Logger;
 
-import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Market {
@@ -21,7 +19,7 @@ public class Market {
      * Interval in milliseconds between each market update.
      */
     private final int interval;
-    private final MessageBuilder builder;
+    private final String name;
 
     private Client client;
     private boolean status = true;
@@ -38,7 +36,7 @@ public class Market {
         this.queue = new ConcurrentLinkedQueue<>();
         this.context = MarketContext.getInstance();
         this.interval = interval;
-        this.builder = new MessageBuilder(name);
+        this.name = name;
     }
 
     public void run(Client client) {
@@ -53,7 +51,7 @@ public class Market {
             context.getAssetIds().forEach(id -> {
                 Asset asset = context.updateAsset(id);
                 if (asset.getPrice() != 0)
-                    client.send(builder.notifyUpdate(asset));
+                    client.send(MessageBuilder.notifyUpdate(asset, name));
             });
             time = System.currentTimeMillis();
         }
@@ -68,56 +66,13 @@ public class Market {
     private void handle(Message msg) {
         if (msg == null) return;
 
-        switch (msg.type()) {
-            case BUY -> buy(msg);
-            case SELL -> sell(msg);
-            default -> error(msg);
-        }
-    }
+        Response response = new Response(msg);
+        Request request = new Request(msg, name);
+        // starting the chain of responsibility
+        BasicHandler.getInstance().handle(request, response);
 
-    private void buy(Message msg) {
-        Message response;
-        Document transaction = createTransaction(msg);
-        if (context.buyAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
-            response = builder.executed(msg);
-            transaction.put("response", MsgType.EXECUTED.name());
-        } else {
-            response = builder.rejected(msg);
-            transaction.put("response", MsgType.REJECTED.name());
-        }
-        Database.save(transaction);
-        client.send(response);
-    }
-
-    private void sell(Message msg) {
-        Message response;
-        Document transaction = createTransaction(msg);
-        if (context.sellAsset(msg.get(Tag.ASSET_ID), msg.getInt(Tag.QUANTITY), msg.getInt(Tag.PRICE))) {
-            response = builder.executed(msg);
-            transaction.put("response", MsgType.EXECUTED.name());
-        } else {
-            response = builder.rejected(msg);
-            transaction.put("response", MsgType.REJECTED.name());
-        }
-        Database.save(transaction);
-        client.send(response);
-    }
-
-    private void error(Message msg) {
-        client.send(builder.error(msg));
-    }
-
-    private static Document createTransaction(Message msg) {
-        Document t = new Document();
-        t.put("message_id", msg.get(Tag.MESSAGE_ID));
-        t.put("client_id", msg.get(Tag.TARGET_ID));
-        t.put("asset_id", msg.get(Tag.ASSET_ID));
-        t.put("time", LocalDateTime.now());
-        t.put("type", msg.type().name());
-        t.put("price", msg.get(Tag.PRICE));
-        t.put("quantity", msg.get(Tag.QUANTITY));
-        t.put("instrument", msg.get(Tag.INSTRUMENT));
-        return t;
+        if (response.getMessage() != null)
+            client.send(response.getMessage());
     }
 
     public ConcurrentLinkedQueue<Message> getQueue() {

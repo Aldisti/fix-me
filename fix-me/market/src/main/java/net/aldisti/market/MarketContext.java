@@ -22,7 +22,7 @@ public class MarketContext {
         StartingAssets.ASSETS.forEach(a -> this.assets.put(a.getId(), a));
     }
 
-    static MarketContext getInstance() {
+    public static MarketContext getInstance() {
         return INSTANCE;
     }
 

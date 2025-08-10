@@ -6,13 +6,10 @@ import net.aldisti.common.fix.constants.MsgType;
 import net.aldisti.common.fix.constants.Tag;
 
 public class MessageBuilder {
-    private final String marketName;
 
-    public MessageBuilder(String marketName) {
-        this.marketName = marketName;
-    }
+    private MessageBuilder() { }
 
-    public Message notifyUpdate(Asset asset) {
+    public static Message notifyUpdate(Asset asset, String marketName) {
         return new Message()
                 .add(Tag.TYPE, MsgType.NOTIFY.value)
                 .add(Tag.INSTRUMENT, asset.getInstrument().name())
@@ -22,19 +19,19 @@ public class MessageBuilder {
                 .add(Tag.MARKET, marketName);
     }
 
-    public Message executed(Message msg) {
+    public static Message executed(Message msg, String marketName) {
         return msg.add(Tag.TYPE, MsgType.EXECUTED.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID))
                 .add(Tag.MARKET, marketName);
     }
 
-    public Message rejected(Message msg) {
+    public static Message rejected(Message msg, String marketName) {
         return msg.add(Tag.TYPE, MsgType.REJECTED.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID))
                 .add(Tag.MARKET, marketName);
     }
 
-    public Message error(Message msg) {
+    public static Message error(Message msg, String marketName) {
         return msg.add(Tag.TYPE, MsgType.ERROR.value)
                 .add(Tag.TARGET_ID, msg.get(Tag.SENDER_ID))
                 .add(Tag.MARKET, marketName);
