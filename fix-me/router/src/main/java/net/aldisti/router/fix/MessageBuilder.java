@@ -9,7 +9,6 @@ public class MessageBuilder {
 
     public static Message invalidMessage(Integer clientId) {
         return new Message()
-                .add(Tag.SENDER_ID, null)
                 .add(Tag.TARGET_ID, clientId.toString())
                 .add(Tag.TYPE, MsgType.ERROR.value);
     }

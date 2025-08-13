@@ -41,7 +41,7 @@ public class Client extends Thread {
     public void run() {
         try (
                 BufferedReader reader = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
-                PrintWriter writer = new PrintWriter(this.socket.getOutputStream(), true);
+                PrintWriter writer = new PrintWriter(this.socket.getOutputStream(), true)
             ) {
             writer.println(clientId);
             routine(reader, writer);
@@ -82,7 +82,7 @@ public class Client extends Thread {
             return;
         }
         if (type == ClientType.MARKET && msg.get(Tag.TARGET_ID) == null) {
-            log.info("Client {} sent message to all brokers", clientId);
+            log.debug("Client {} sent broadcast", clientId);
             dispatcher.sendAll(raw);
             return;
         } else if (msg.get(Tag.TARGET_ID) == null) {
@@ -108,8 +108,7 @@ public class Client extends Thread {
         try {
             return Engine.unmarshall(raw);
         } catch (InvalidFixMessage e) { // handle deserialization errors
-            log.error("Client {} sent invalid message", clientId, e);
-            log.info("Message: {}", raw);
+            log.error("Client {} sent invalid message: {}", clientId, raw, e);
             return null;
         }
     }
@@ -120,7 +119,7 @@ public class Client extends Thread {
      * @param msg A message to send.
      */
     public synchronized void sendMessage(String msg) {
-        log.info("Sending to client {}: {}", clientId, msg);
+        log.info("Sending to {}: {}", clientId, msg);
         queue.offer(msg);
     }
 
