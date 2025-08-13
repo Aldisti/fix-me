@@ -1,7 +1,5 @@
 package net.aldisti.router;
 
-import net.aldisti.common.fix.Engine;
-import net.aldisti.common.fix.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +67,6 @@ public class Dispatcher {
      *
      * @param clientId A client id.
      * @param raw The message to send.
-     * @see #sendTo(int, Message)
      */
     public synchronized void sendTo(int clientId, String raw) {
         if (clients.containsKey(clientId))
@@ -77,39 +74,11 @@ public class Dispatcher {
     }
 
     /**
-     * Serializes a message and sends it to another client.
-     * <br>
-     * A new line is appended to the message.
-     *
-     * @param clientId A client id.
-     * @param msg The message to send.
-     * @see #sendTo(int, String)
-     */
-    public synchronized void sendTo(int clientId, Message msg) {
-        if (exists(clientId))
-            clients.get(clientId).sendMessage(Engine.marshall(msg));
-    }
-
-    /**
      * Sends a message to all Brokers registered to the dispatcher.
      *
      * @param raw The message to send.
-     * @see #sendAll(Message)
      */
     public synchronized void sendAll(String raw) {
-        clients.keySet().forEach(id -> {
-            Client client = clients.get(id);
-            if (client != null && client.getType() == ClientType.BROKER)
-                clients.get(id).sendMessage(raw);
-        });
-    }
-
-    /**
-     * @param msg The message to send.
-     * @see #sendAll(String)
-     */
-    public synchronized void sendAll(Message msg) {
-        String raw = Engine.marshall(msg);
         clients.keySet().forEach(id -> {
             Client client = clients.get(id);
             if (client != null && client.getType() == ClientType.BROKER)
