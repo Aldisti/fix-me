@@ -1,12 +1,10 @@
 package net.aldisti.common.fix.constants;
 
 import net.aldisti.common.fix.InvalidFixMessage;
-import net.aldisti.common.fix.validators.IsEnum;
-import net.aldisti.common.fix.validators.IsInteger;
-import net.aldisti.common.fix.validators.IsMsgType;
-import net.aldisti.common.fix.validators.TagValueValidator;
+import net.aldisti.common.fix.validators.*;
 
 public enum Tag {
+    VERSION(8, RegexValidator.of("^FIX.42$")),
     BODY_LENGTH(9, IsInteger.of()),
     TYPE(11, IsMsgType.of()),
     SENDER_ID(13, IsInteger.of(6)),
@@ -47,7 +45,7 @@ public enum Tag {
         } catch (NumberFormatException e) {
             throw new InvalidFixMessage("Invalid tag, " + value + " is not an integer");
         }
-        // BS could be used to search the value
+        // Binary search could be used to find the value
         for (Tag tag : Tag.values()) {
             if (tag.value == needle)
                 return tag;

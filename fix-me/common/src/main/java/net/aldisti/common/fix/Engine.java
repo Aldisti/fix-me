@@ -2,11 +2,21 @@ package net.aldisti.common.fix;
 
 import net.aldisti.common.fix.constants.Tag;
 
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static net.aldisti.common.fix.Message.TAG_SEP;
 
 public class Engine {
+
+    /**
+     * List of tags that should not be added to the message string representation
+     * when marshalling it.
+     * Because these are added with {@link EngineUtils#encapsulate(String)}.
+     */
+    private static final List<Tag> hiddenTags = List.of(Tag.VERSION, Tag.BODY_LENGTH, Tag.CHECKSUM);
+
     /**
      * Marshalls a {@link Message} into a string representation of it.
      */
@@ -15,11 +25,11 @@ public class Engine {
             throw new InvalidFixMessage("Invalid FIX message");
 
         String body = message.getAttributes().keySet().stream()
-                .filter(s -> s != Tag.BODY_LENGTH && s != Tag.CHECKSUM)
+                .filter(Predicate.not(hiddenTags::contains))
                 .map(message::getTagValue)
                 .collect(Collectors.joining(TAG_SEP));
 
-        return EngineUtils.addChecksum(EngineUtils.addBodyLength(body));
+        return EngineUtils.encapsulate(body);
     }
 
     /**

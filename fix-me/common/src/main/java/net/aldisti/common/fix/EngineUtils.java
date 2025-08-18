@@ -5,6 +5,7 @@ import net.aldisti.common.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static net.aldisti.common.fix.Message.TAGVALUE_SEP;
 import static net.aldisti.common.fix.Message.TAG_SEP;
@@ -12,28 +13,50 @@ import static net.aldisti.common.fix.Message.TAG_SEP;
 class EngineUtils {
     private EngineUtils() {}
 
+    private static final String VERSION = Tag.VERSION.value() + TAGVALUE_SEP + "FIX.42" + TAG_SEP;
+
     /**
      * This regex checks if a FIX message starts with a BodyLength tag
      * and ends with a Checksum tag.
      */
-    private static final String INTEGRITY_REGEX = "^(" + Tag.BODY_LENGTH.value()
-            + TAGVALUE_SEP + "\\d+)" + TAG_SEP + "(.+)" + TAG_SEP
-            + "(" + Tag.CHECKSUM.value() + TAGVALUE_SEP + "\\d{3})$";
+    private static final Pattern INTEGRITY_REGEX = Pattern.compile(String.format(
+            "^%3$s(?<bdlen>9%2$s\\d+)%1$s(?:\\d+?=[^%1$s]+?%1$s)+?(?<chksm>10%2$s\\d{3})$",
+            TAG_SEP, TAGVALUE_SEP, VERSION
+    ));
+
+    /**
+     * This function adds 3 fundamental parts to the message:
+     * <ul>
+     *     <li>counts and adds the body length;</li>
+     *     <li>calculates and adds the checksum;</li>
+     *     <li>prepends the FIX version.</li>
+     * </ul>
+     */
+    static String encapsulate(String body) {
+        return addFixVersion(addChecksum(addBodyLength(body)));
+    }
 
     /**
      * Adds the body length tag-value to the beginning of a message.
      */
-    static String addBodyLength(String body) {
+    private static String addBodyLength(String body) {
         return Tag.BODY_LENGTH.value() + TAGVALUE_SEP + body.length() + TAG_SEP + body;
     }
 
     /**
      * Calculates and adds the checksum tag-value to the end of a message.
      */
-    static String addChecksum(String body) {
+    private static String addChecksum(String body) {
         String checksum = StringUtils.leftPad(calculateChecksum(body).toString(), 3, '0');
         return body + TAG_SEP + Tag.CHECKSUM.value()
                 + TAGVALUE_SEP + checksum;
+    }
+
+    /**
+     * Prepends the version of the FIX protocol to the message.
+     */
+    private static String addFixVersion(String body) {
+        return VERSION + body;
     }
 
     /**
@@ -57,8 +80,9 @@ class EngineUtils {
     static void verifyIntegrity(String msg) throws InvalidFixMessage {
         if (msg == null || msg.isEmpty())
             throw new InvalidFixMessage("Empty or null message");
-        if (!msg.matches(INTEGRITY_REGEX))
+        if (!INTEGRITY_REGEX.matcher(msg).matches())
             throw new InvalidFixMessage("Invalid message format");
+        msg = msg.substring(VERSION.length());
         verifyChecksum(msg);
         verifyBodyLength(msg);
     }
