@@ -22,7 +22,7 @@ public class Server extends Thread {
 
     @Override
     public void run() {
-        while (!socket.isClosed()) {
+        while (!socket.isClosed() && !this.isInterrupted()) {
             Client client;
             try {
                 client = new Client(socket.accept(), type);

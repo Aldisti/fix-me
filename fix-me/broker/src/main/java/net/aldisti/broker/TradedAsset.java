@@ -66,6 +66,6 @@ public class TradedAsset {
     public Integer rateOfReturn() {
         if (paid == 0)
             return 0;
-        return (price * quantity - paid) / paid * 100;
+        return (price * quantity - paid) * 100 / paid;
     }
 }

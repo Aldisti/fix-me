@@ -79,9 +79,9 @@ public class MarketContext {
         boolean sign = RANDOM.nextBoolean();
         int price = asset.getPrice();
         // calculate the difference to add or subtract
-        double diff = Math.ceil((double) price * ((double) percentage / 100) * asset.getInstrument().volatility);
+        int diff = ((price * percentage / 100) * (int) (100 * asset.getInstrument().volatility)) / 100 + 1;
         // update the price
-        asset.setPrice(price + (int) ((sign) ? diff : -diff));
+        asset.setPrice(price + ((sign) ? diff : -diff));
         log.info("Updated asset {} from {} to {}", asset.getId(), price, asset.getPrice());
     }
 }
